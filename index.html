@@ -215,51 +215,12 @@
     .delta-dn{color:var(--red);font-size:10px}
     .delta-eq{color:var(--muted);font-size:10px}
 
-    /* ── Tesla Live ── */
-    .flow-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
-    .flow-crd{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center}
-    .flow-icon{font-size:32px;margin-bottom:8px}
-    .flow-val{font-size:28px;font-weight:800;line-height:1}
-    .flow-unit{font-size:13px;color:var(--muted);margin-left:3px}
-    .flow-lbl{font-size:11px;color:var(--muted);margin-top:5px}
-    .flow-dir{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;display:inline-block;margin-top:5px}
-    .dir-in{background:rgba(239,68,68,.15);color:var(--red)}
-    .dir-out{background:rgba(16,185,129,.15);color:var(--green)}
-    .dir-chg{background:rgba(139,92,246,.15);color:var(--violet)}
-    .dir-dis{background:rgba(245,158,11,.15);color:var(--amber)}
-    .dir-eq{background:rgba(148,163,184,.15);color:var(--muted)}
-    .tesla-cfg{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px}
-    .tesla-cfg h4{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
-    .cfg-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
-    .cfg-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
-    .cfg-field label{font-size:11px;color:var(--muted)}
-    .cfg-field input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
-      padding:6px 10px;color:var(--text);font-size:12px;outline:none}
-    .cfg-field input:focus{border-color:var(--amber)}
-    .btn{padding:7px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;
-      cursor:pointer;transition:opacity .2s;white-space:nowrap}
-    .btn:hover{opacity:.82}
-    .btn-connect{background:var(--green);color:#fff}
-    .btn-demo{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-    .btn-disc{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
-    .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;
-      margin-right:5px;vertical-align:middle}
-    .dot-green{background:var(--green);box-shadow:0 0 6px var(--green)}
-    .dot-red{background:var(--red)}
-    .dot-grey{background:var(--muted)}
-    .cors-note{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.22);
-      border-radius:8px;padding:12px 14px;font-size:11px;color:var(--muted);
-      margin-bottom:16px;line-height:1.65}
-    .cors-note strong{color:var(--amber)}
-    .cors-note a{color:var(--cyan)}
-
     /* ── Responsive ── */
     @media(max-width:768px){
       .kpi-bar{grid-template-columns:repeat(3,1fr)}
       .cgrid{grid-template-columns:1fr}
       .impact-grid{grid-template-columns:1fr 1fr}
       .benefit-grid{grid-template-columns:1fr}
-      .flow-grid{grid-template-columns:1fr}
       .content{padding:14px 16px}
       .hdr{padding:14px 16px}
       .tabs{padding:0 16px}
@@ -330,7 +291,6 @@
   <button class="tab-btn" onclick="showTab('zukunft',this)">🔭 Zukunft</button>
   <button class="tab-btn" onclick="showTab('klima',this)">🌱 Klimawirkung</button>
   <button class="tab-btn" onclick="showTab('vergleich',this)">📊 Jahresvergleich</button>
-  <button class="tab-btn" onclick="showTab('live',this)">⚡ Tesla Live</button>
 </div>
 
 <!-- ── Tab Content ────────────────────────────────────── -->
@@ -746,82 +706,6 @@
     </div>
   </div>
 
-  <!-- ⑨ Tesla Live ────────────────────────────────────── -->
-  <div id="pane-live" class="pane">
-    <div class="sec-hdr">
-      <h2>⚡ Tesla Live</h2>
-      <p>Echtzeit-Leistungsdaten der Powerwall über lokale Gateway-API</p>
-    </div>
-    <div class="cors-note">
-      <strong>⚙ Einrichtung (einmalig):</strong> Die Powerwall nutzt ein selbst-signiertes Zertifikat.
-      Öffne zuerst <strong>https://[IP-Adresse]/api/system_status/soe</strong> in einem neuen Browser-Tab
-      und bestätige die Sicherheitswarnung. Danach funktioniert die Verbindung aus diesem Dashboard.
-      Alternativ: <strong>Demo-Modus</strong> für eine vollständige Vorschau ohne Hardware.
-    </div>
-    <div class="tesla-cfg">
-      <h4>Verbindungseinstellungen</h4>
-      <div class="cfg-row">
-        <div class="cfg-field">
-          <label>Powerwall IP-Adresse</label>
-          <input type="text" id="tsl-ip" placeholder="192.168.1.100">
-        </div>
-        <div class="cfg-field">
-          <label>E-Mail (Tesla-Konto)</label>
-          <input type="email" id="tsl-email" placeholder="name@example.com">
-        </div>
-        <div class="cfg-field">
-          <label>Passwort</label>
-          <input type="password" id="tsl-pw" placeholder="••••••••">
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-connect" onclick="teslaConnect()">🔗 Verbinden</button>
-        <button class="btn btn-demo" onclick="teslaDemo()">▶ Demo-Modus</button>
-        <button class="btn btn-disc" id="tsl-disc" style="display:none" onclick="teslaDisconnect()">✕ Trennen</button>
-        <span id="tsl-status" style="font-size:12px;color:var(--muted);margin-left:4px">
-          <span class="status-dot dot-grey"></span>Nicht verbunden
-        </span>
-      </div>
-    </div>
-    <div id="live-wrap" style="display:none">
-      <div class="flow-grid">
-        <div class="flow-crd">
-          <div class="flow-icon">☀️</div>
-          <div><span class="flow-val" id="live-solar">—</span><span class="flow-unit">W</span></div>
-          <div class="flow-lbl">Solar-Erzeugung</div>
-        </div>
-        <div class="flow-crd">
-          <div class="flow-icon">🏠</div>
-          <div><span class="flow-val" id="live-home">—</span><span class="flow-unit">W</span></div>
-          <div class="flow-lbl">Hausverbrauch</div>
-        </div>
-        <div class="flow-crd">
-          <div class="flow-icon">🔋</div>
-          <div><span class="flow-val" id="live-soe">—</span><span class="flow-unit">%</span></div>
-          <div class="flow-lbl">Powerwall Ladezustand</div>
-          <div class="flow-dir dir-eq" id="live-bat-dir">—</div>
-        </div>
-        <div class="flow-crd">
-          <div class="flow-icon">🔌</div>
-          <div><span class="flow-val" id="live-grid">—</span><span class="flow-unit">W</span></div>
-          <div class="flow-lbl">Netz</div>
-          <div class="flow-dir dir-eq" id="live-grid-dir">—</div>
-        </div>
-      </div>
-      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:12px">
-        Aktualisierung alle 10 s &nbsp;·&nbsp; Zuletzt: <span id="live-ts">—</span>
-      </div>
-      <div class="ccrd">
-        <div class="ctitle">Leistungsfluss — letzte 60 Messwerte<span>Watt (live)</span></div>
-        <div class="cbox tall"><canvas id="c-live"></canvas></div>
-      </div>
-    </div>
-    <div id="live-err" style="display:none" class="analysis">
-      <h4 style="color:var(--red)">Verbindungsfehler</h4>
-      <ul id="live-err-list"></ul>
-    </div>
-  </div>
-
 </div><!-- /content -->
 
 <script>
@@ -940,7 +824,8 @@ function derive(rows) {
   const cumCO2    = co2.reduce((acc,v) => [...acc, (acc[acc.length-1]||0)+v], []);
 
   // Monthly simulation (used when no real monthly rows)
-  const fullY   = solar.filter(s => s > 5);
+  const fullIdx = solar.reduce((acc,s,i) => { if (s > 5) acc.push(i); return acc; }, []);
+  const fullY   = fullIdx.map(i => solar[i]);
   const avgFull = fullY.length ? fullY.reduce((a,b)=>a+b,0)/fullY.length : solar[solar.length-1];
   const mKwh    = MONTH_FACTORS.map(f => +(f * avgFull * 1000).toFixed(0));
 
@@ -960,7 +845,7 @@ function derive(rows) {
   }
 
   // ROI
-  const fullSav      = savings.filter((_,i) => solar[i] > 5);
+  const fullSav      = fullIdx.map(i => savings[i]);
   const avgAnnualSav = Math.round(fullSav.length
     ? fullSav.reduce((a,b)=>a+b,0)/fullSav.length
     : savings.reduce((a,b)=>a+b,0)/savings.length);
@@ -992,6 +877,9 @@ function derive(rows) {
     fYears, fSolar, fToGrid, fAutark, fIsAct,
     totalSolar:    +solar.reduce((a,b)=>a+b,0).toFixed(1),
     totalSelfCons: +selfCons.reduce((a,b)=>a+b,0).toFixed(1),
+    totalHome:    +home.reduce((a,b)=>a+b,0).toFixed(1),
+    totalFeedin:  +tgrid.reduce((a,b)=>a+b,0).toFixed(1),
+    totalFeedRev: +feedRev.reduce((a,b)=>a+b,0).toFixed(0),
     totalSav, avgAnnualSav, paybackYears, roiProgress,
     totalCO2:  co2.reduce((a,b)=>a+b,0),
     bestSolar: Math.max(...solar),
@@ -1190,7 +1078,9 @@ function buildMonthlyChart(d, yr) {
 // UPDATE UI
 // ═══════════════════════════════════════════════════════════════════════════
 const de = (n,dec=1) => (+n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-const PCOLS = ['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316','#3b82f6','#ec4899'];
+const PCOLS   = ['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316','#3b82f6','#ec4899'];
+const PCOLS_A = ['rgba(245,158,11,.15)','rgba(6,182,212,.15)','rgba(139,92,246,.15)',
+                 'rgba(16,185,129,.15)','rgba(249,115,22,.15)','rgba(59,130,246,.15)','rgba(236,72,153,.15)'];
 
 function updateKPIs(d) {
   document.getElementById('kpi-solar').textContent    = de(d.totalSolar) + ' MWh';
@@ -1339,13 +1229,13 @@ function updateCards(d) {
   const bestAutYear = d.yrs[bestAutIdx];
   const bestGrid    = d.fgrid[bestAutIdx];
   document.getElementById('cards-verbrauch').innerHTML =
-    card('Gesamtverbrauch', de(d.home.reduce((a,b)=>a+b,0))+' MWh', d.yrs[0]+' – '+lastYear+' gesamt') +
+    card('Gesamtverbrauch', de(d.totalHome)+' MWh', d.yrs[0]+' – '+lastYear+' gesamt') +
     card('Autarkie '+bestAutYear, de(d.bestAutarky)+' %', 'Nur '+de(bestGrid*1000,0)+' kWh aus Netz', badge('up','↑ Jahresrekord'), 'var(--green)') +
     card('Netzbezug '+bestAutYear, de(bestGrid*1000,0)+' kWh', 'Jahresminimum', badge('dn','↓ Minimum'), 'var(--cyan)') +
     card('⌀ Jahresverbrauch', de(avgHome)+' MWh', 'Vollbetriebsjahre', '', 'var(--violet)');
 
-  const totalFeedin   = d.tgrid.reduce((a,b)=>a+b,0);
-  const totalFeedRev  = d.feedRev.reduce((a,b)=>a+b,0);
+  const totalFeedin   = d.totalFeedin;
+  const totalFeedRev  = d.totalFeedRev;
   const maxFeedin     = Math.max(...d.tgrid);
   const bestFeedinIdx = d.tgrid.indexOf(maxFeedin);
   const solarPos      = d.solar.filter(s=>s>0);
@@ -1463,21 +1353,11 @@ document.addEventListener('drop', e => {
 currentRows = DEFAULT_ROWS;
 refreshAll(DEFAULT_ROWS);
 
-// Restore saved Tesla credentials
-document.getElementById('tsl-ip').value    = localStorage.getItem('tesla_ip')    || '';
-document.getElementById('tsl-email').value = localStorage.getItem('tesla_email')  || '';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // JAHRESVERGLEICH
 // ═══════════════════════════════════════════════════════════════════════════
 function buildComparisonTab(d) {
-  if (CH.radar) try{ CH.radar.destroy() }catch(e){}
-  if (CH.yoy)   try{ CH.yoy.destroy()   }catch(e){}
-
-  const YCOLS = ['#f59e0b','#06b6d4','#10b981','#8b5cf6','#f97316','#3b82f6','#ec4899'];
-  const YA    = ['rgba(245,158,11,.15)','rgba(6,182,212,.15)','rgba(16,185,129,.15)',
-                 'rgba(139,92,246,.15)','rgba(249,115,22,.15)','rgba(59,130,246,.15)','rgba(236,72,153,.15)'];
-
   const metrics = [
     {lbl:'Solar (MWh)',       arr:d.solar,   fmt:v=>de(v)+'MWh'},
     {lbl:'Autarkie (%)',      arr:d.autarky, fmt:v=>de(v)+'%'},
@@ -1488,10 +1368,11 @@ function buildComparisonTab(d) {
     {lbl:'CO₂ (kg)',         arr:d.co2,     fmt:v=>de(v,0)+'kg'},
   ];
 
-  // Normalize each metric: best year = 100
-  const norm = metrics.map(m => {
+  // Normalize each metric: best year = 100; also store mx/bestIdx for table
+  const stats = metrics.map(m => {
     const mx = Math.max(...m.arr);
-    return m.arr.map(v => mx > 0 ? Math.round(v/mx*100) : 0);
+    const bestIdx = m.arr.indexOf(mx);
+    return { normArr: m.arr.map(v => mx > 0 ? Math.round(v/mx*100) : 0), mx, bestIdx };
   });
 
   // Radar chart
@@ -1501,11 +1382,11 @@ function buildComparisonTab(d) {
       labels: metrics.map(m=>m.lbl),
       datasets: d.yrs.map((yr,i)=>({
         label: String(yr),
-        data:  norm.map(n => n[i] ?? 0),
-        borderColor:          YCOLS[i%YCOLS.length],
-        backgroundColor:      YA[i%YA.length],
+        data:  stats.map(s => s.normArr[i] ?? 0),
+        borderColor:          PCOLS[i%PCOLS.length],
+        backgroundColor:      PCOLS_A[i%PCOLS_A.length],
         borderWidth:2, pointRadius:3,
-        pointBackgroundColor: YCOLS[i%YCOLS.length],
+        pointBackgroundColor: PCOLS[i%PCOLS.length],
       }))
     },
     options:{
@@ -1529,8 +1410,8 @@ function buildComparisonTab(d) {
         datasets: metrics.slice(0,4).map((m,mi)=>({
           label: m.lbl,
           data:  m.arr.slice(1).map((v,i) => m.arr[i]>0 ? +((v/m.arr[i]-1)*100).toFixed(1) : 0),
-          backgroundColor: YCOLS[mi]+'99',
-          borderColor:     YCOLS[mi],
+          backgroundColor: PCOLS[mi%PCOLS.length]+'99',
+          borderColor:     PCOLS[mi%PCOLS.length],
           borderWidth:1, borderRadius:3,
         }))
       },
@@ -1549,11 +1430,10 @@ function buildComparisonTab(d) {
 
   // Comparison table
   document.getElementById('cmp-head').innerHTML =
-    `<tr><th>Kennzahl</th>${d.yrs.map((yr,i)=>`<th style="color:${YCOLS[i%YCOLS.length]}">${yr}</th>`).join('')}</tr>`;
+    `<tr><th>Kennzahl</th>${d.yrs.map((yr,i)=>`<th style="color:${PCOLS[i%PCOLS.length]}">${yr}</th>`).join('')}</tr>`;
 
-  document.getElementById('cmp-body').innerHTML = metrics.map(m => {
-    const mx = Math.max(...m.arr);
-    const bestIdx = m.arr.indexOf(mx);
+  document.getElementById('cmp-body').innerHTML = metrics.map((m, mi) => {
+    const { mx, bestIdx } = stats[mi];
     const cells = m.arr.map((v,i) => {
       const prev = m.arr[i-1];
       let delta = '';
@@ -1562,7 +1442,7 @@ function buildComparisonTab(d) {
         delta = `<br><span class="${+pct>0?'delta-up':+pct<0?'delta-dn':'delta-eq'}">${+pct>=0?'+':''}${pct}%</span>`;
       }
       return `<td class="${v===mx?'cmp-best':''}"
-        style="${v===mx?'color:'+YCOLS[bestIdx%YCOLS.length]:''}">${m.fmt(v)}${delta}</td>`;
+        style="${v===mx?'color:'+PCOLS[bestIdx%PCOLS.length]:''}">${m.fmt(v)}${delta}</td>`;
     }).join('');
     return `<tr><td>${m.lbl}</td>${cells}</tr>`;
   }).join('');
@@ -1577,152 +1457,6 @@ function buildComparisonTab(d) {
     `Beste Eigenverbrauchsquote: <strong>${de(Math.max(...d.evq))} %</strong> in <strong>${bestEvqYr}</strong> — geringstes Einspeise-Potenzial.`,
     `Kumulierte Gesamtersparnis über ${d.yrs.length} Jahre: <strong>${de(d.totalSav,0)} €</strong>.`,
   ].map(t=>`<li>${t}</li>`).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TESLA LIVE  (lokale Powerwall Gateway API)
-// ═══════════════════════════════════════════════════════════════════════════
-let teslaTimer = null, demoTimer = null;
-let liveCH = null; // kept outside CH so nukeCharts() doesn't destroy it
-const LH = {solar:[],home:[],bat:[],grid:[],ts:[]};
-const LH_MAX = 60;
-
-function pushLH(data) {
-  LH.solar.push(Math.max(0,data.solar)); LH.home.push(Math.max(0,data.home));
-  LH.bat.push(data.batPow); LH.grid.push(data.grid);
-  LH.ts.push(new Date().toLocaleTimeString('de-DE'));
-  if (LH.solar.length > LH_MAX) {
-    LH.solar.shift(); LH.home.shift(); LH.bat.shift(); LH.grid.shift(); LH.ts.shift();
-  }
-}
-
-function fmtW(w) { return Math.abs(w)>=1000 ? (Math.abs(w)/1000).toFixed(1)+'k' : String(Math.round(Math.abs(w))); }
-
-function updateLiveUI(data) {
-  pushLH(data);
-  const {solar,home,grid,batPow,soe} = data;
-  document.getElementById('live-solar').textContent = fmtW(solar);
-  document.getElementById('live-home').textContent  = fmtW(home);
-  document.getElementById('live-soe').textContent   = soe.toFixed(1);
-  document.getElementById('live-grid').textContent  = fmtW(Math.abs(grid));
-  document.getElementById('live-ts').textContent    = new Date().toLocaleTimeString('de-DE');
-
-  const gDir = document.getElementById('live-grid-dir');
-  if      (grid >  50) { gDir.className='flow-dir dir-in';  gDir.textContent='Bezug'; }
-  else if (grid < -50) { gDir.className='flow-dir dir-out'; gDir.textContent='Einspeisung'; }
-  else                 { gDir.className='flow-dir dir-eq';  gDir.textContent='Ausgeglichen'; }
-
-  const bDir = document.getElementById('live-bat-dir');
-  if      (batPow >  50) { bDir.className='flow-dir dir-chg'; bDir.textContent=`↑ Laden ${fmtW(batPow)} W`; }
-  else if (batPow < -50) { bDir.className='flow-dir dir-dis'; bDir.textContent=`↓ Entladen ${fmtW(-batPow)} W`; }
-  else                   { bDir.className='flow-dir dir-eq';  bDir.textContent='Ruhend'; }
-
-  // Update or build live history chart
-  const ds = [
-    {label:'Solar (W)',    data:[...LH.solar],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.12)',fill:true, tension:.3,borderWidth:2,  pointRadius:0},
-    {label:'Verbrauch (W)',data:[...LH.home], borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.10)',fill:true, tension:.3,borderWidth:2,  pointRadius:0},
-    {label:'Powerwall (W)',data:[...LH.bat],  borderColor:'#8b5cf6',backgroundColor:'transparent',         fill:false,tension:.3,borderWidth:1.5,pointRadius:0},
-    {label:'Netz (W)',     data:[...LH.grid], borderColor:'#ef4444',backgroundColor:'transparent',         fill:false,tension:.3,borderWidth:1.5,pointRadius:0},
-  ];
-  if (liveCH) {
-    liveCH.data.labels = [...LH.ts];
-    ds.forEach((d,i) => liveCH.data.datasets[i].data = d.data);
-    liveCH.update('none');
-  } else {
-    liveCH = new Chart(document.getElementById('c-live'), {
-      type:'line',
-      data:{labels:[...LH.ts], datasets:ds},
-      options:{responsive:true,maintainAspectRatio:false,animation:false,
-        plugins:{legend:leg,tooltip:{...ttip,callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.round(ctx.raw)} W`}}},
-        scales:{x:{grid:gCfg,ticks:{maxTicksLimit:8,maxRotation:0}},y:{grid:gCfg,ticks:{callback:v=>v+' W'}}}}
-    });
-  }
-}
-
-function setLiveStatus(state) {
-  const map = {off:['dot-grey','Nicht verbunden'],conn:['dot-green','Verbunden · Live'],
-               demo:['dot-green','Demo-Modus'],err:['dot-red','Verbindungsfehler']};
-  const [dot,txt] = map[state]||map.off;
-  document.getElementById('tsl-status').innerHTML = `<span class="status-dot ${dot}"></span>${txt}`;
-  document.getElementById('tsl-disc').style.display = (state==='conn'||state==='demo') ? '' : 'none';
-}
-
-function showLiveError(msg, ip='') {
-  const isCORS = /fetch|NetworkError|CORS/i.test(msg);
-  document.getElementById('live-err-list').innerHTML = `
-    <li><strong>Fehler:</strong> ${msg}</li>
-    ${isCORS ? `<li><strong>CORS-Problem erkannt.</strong>
-      ① Öffne <a href="https://${ip||'[IP]'}/api/system_status/soe" target="_blank"
-         style="color:var(--cyan)">https://${ip||'[IP]'}/api/system_status/soe</a> im Browser-Tab und akzeptiere das Zertifikat.
-      ② Lade diese Seite neu und verbinde erneut.</li>` : ''}
-    <li>Oder nutze den <strong>Demo-Modus</strong> für eine Vorschau ohne Hardware.</li>`;
-  document.getElementById('live-err').style.display = '';
-}
-
-async function teslaConnect() {
-  const ip    = document.getElementById('tsl-ip').value.trim();
-  const email = document.getElementById('tsl-email').value.trim();
-  const pw    = document.getElementById('tsl-pw').value;
-  if (!ip||!email||!pw) { showToast('Bitte IP, E-Mail und Passwort eingeben', true); return; }
-  localStorage.setItem('tesla_ip', ip); localStorage.setItem('tesla_email', email);
-  document.getElementById('live-err').style.display = 'none';
-  setLiveStatus('off');
-  try {
-    const res = await fetch(`https://${ip}/api/login/Basic`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:'customer',password:pw,email,force_sm_off:false})
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status} — Login fehlgeschlagen`);
-    const {token} = await res.json();
-    setLiveStatus('conn');
-    document.getElementById('live-wrap').style.display = '';
-    const poll = async () => {
-      try {
-        const hdrs = {headers:{'Authorization':`Bearer ${token}`}};
-        const [agg,soe] = await Promise.all([
-          fetch(`https://${ip}/api/meters/aggregates`,  hdrs).then(r=>r.json()),
-          fetch(`https://${ip}/api/system_status/soe`,  hdrs).then(r=>r.json()),
-        ]);
-        updateLiveUI({solar:agg.solar.instant_power, home:agg.load.instant_power,
-                      grid:agg.site.instant_power,  batPow:agg.battery.instant_power, soe:soe.percentage});
-      } catch(e) { showToast('Lesefehler: '+e.message, true); }
-    };
-    poll();
-    teslaTimer = setInterval(poll, 10000);
-  } catch(e) {
-    setLiveStatus('err');
-    showLiveError(e.message, ip);
-  }
-}
-
-function teslaDemo() {
-  teslaDisconnect();
-  setLiveStatus('demo');
-  document.getElementById('live-wrap').style.display = '';
-  document.getElementById('live-err').style.display  = 'none';
-  const tick = () => {
-    const hr  = new Date().getHours();
-    const sun = Math.max(0, Math.sin((hr-6)/12*Math.PI));
-    const solar  = sun*3800 + (Math.random()-.5)*300;
-    const home   = 400 + Math.random()*700;
-    const soe    = Math.min(100, Math.max(0, 60 + Math.sin(Date.now()/80000)*25 + Math.random()*4));
-    const excess = solar - home;
-    const batPow = excess > 0 ? Math.min(excess, 1600) : Math.max(excess, -1600);
-    const grid   = excess - batPow;
-    updateLiveUI({solar:Math.max(0,solar), home, grid, batPow, soe});
-  };
-  tick();
-  demoTimer = setInterval(tick, 3000);
-}
-
-function teslaDisconnect() {
-  clearInterval(teslaTimer); clearInterval(demoTimer);
-  teslaTimer = demoTimer = null;
-  LH.solar=[]; LH.home=[]; LH.bat=[]; LH.grid=[]; LH.ts=[];
-  if (liveCH) { try{liveCH.destroy()}catch(e){} liveCH = null; }
-  setLiveStatus('off');
-  document.getElementById('live-wrap').style.display = 'none';
-  document.getElementById('live-err').style.display  = 'none';
 }
 
 // ─── Tab Switching ────────────────────────────────────────────────────────
