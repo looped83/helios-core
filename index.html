@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0f172a;--surface:#1e293b;--surface2:#263449;--border:#334155;
+      --text:#e2e8f0;--muted:#94a3b8;
+      --amber:#f59e0b;--amber2:#fcd34d;--amber3:#d97706;
+      --cyan:#06b6d4;--green:#10b981;--violet:#8b5cf6;
+      --red:#ef4444;--rose:#f43f5e;--blue:#3b82f6;--orange:#f97316;
+    }
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* ── Header ── */
+    .hdr{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:1px solid var(--border);
+      padding:18px 32px;display:flex;align-items:center;gap:16px}
+    .hdr-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--amber),var(--amber3));
+      border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+    .hdr-title h1{font-size:22px;font-weight:700}
+    .hdr-title p{color:var(--muted);font-size:12px;margin-top:2px}
+    .hdr-badge{margin-left:auto;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);
+      color:var(--amber);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+
+    /* ── KPI Bar ── */
+    .kpi-bar{background:var(--surface);border-bottom:1px solid var(--border);
+      padding:14px 32px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+    .kpi{text-align:center}
+    .kpi-v{font-size:20px;font-weight:700;color:var(--amber);line-height:1}
+    .kpi-l{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+    .kpi:nth-child(2) .kpi-v{color:var(--cyan)}
+    .kpi:nth-child(3) .kpi-v{color:var(--green)}
+    .kpi:nth-child(4) .kpi-v{color:var(--violet)}
+    .kpi:nth-child(5) .kpi-v{color:var(--rose)}
+
+    /* ── Tabs ── */
+    .tabs{background:var(--surface);border-bottom:1px solid var(--border);
+      padding:0 32px;display:flex;overflow-x:auto;gap:0}
+    .tabs::-webkit-scrollbar{height:3px}
+    .tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .tab-btn{background:none;border:none;color:var(--muted);padding:13px 18px;font-size:13px;
+      font-weight:500;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+      transition:all .2s;display:flex;align-items:center;gap:7px}
+    .tab-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
+    .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+    /* ── Content ── */
+    .content{padding:24px 32px;max-width:1400px;margin:0 auto}
+    .pane{display:none}.pane.active{display:block}
+
+    .sec-hdr{margin-bottom:22px}
+    .sec-hdr h2{font-size:19px;font-weight:700}
+    .sec-hdr p{color:var(--muted);font-size:12px;margin-top:3px}
+
+    /* ── Stat Cards ── */
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:14px;margin-bottom:22px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+    .card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+    .card-val{font-size:26px;font-weight:700;color:var(--amber);line-height:1}
+    .card-sub{font-size:11px;color:var(--muted);margin-top:5px}
+    .badge-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;
+      padding:2px 8px;border-radius:10px;margin-top:7px}
+    .t-up{background:rgba(16,185,129,.15);color:var(--green)}
+    .t-dn{background:rgba(239,68,68,.15);color:var(--red)}
+    .t-eq{background:rgba(148,163,184,.15);color:var(--muted)}
+
+    /* ── Chart Grid ── */
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+    .cgrid.full{grid-template-columns:1fr}
+    .ccrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px}
+    .ctitle{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)}
+    .ctitle span{color:var(--muted);font-weight:400;font-size:11px;margin-left:6px}
+    .cbox{position:relative;height:250px}
+    .cbox.tall{height:280px}
+    .cbox.sm{height:190px}
+
+    /* ── Analysis ── */
+    .analysis{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);
+      border-radius:8px;padding:14px 18px;margin-top:4px}
+    .analysis h4{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:9px;text-transform:uppercase;letter-spacing:.5px}
+    .analysis ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .analysis li{font-size:12px;color:var(--muted);padding-left:14px;position:relative;line-height:1.5}
+    .analysis li::before{content:'→';position:absolute;left:0;color:var(--amber)}
+    .analysis li strong{color:var(--text)}
+    .analysis.green{border-left-color:var(--green)}
+    .analysis.green h4{color:var(--green)}
+    .analysis.green li::before{color:var(--green)}
+
+    /* ── Progress Bars ── */
+    .prog-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+    .prog-item{display:flex;flex-direction:column;gap:4px}
+    .prog-hdr{display:flex;justify-content:space-between;font-size:12px}
+    .prog-lbl{color:var(--text)}.prog-val{color:var(--muted);font-weight:600}
+    .prog-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+    .prog-fill{height:100%;border-radius:4px;transition:width .8s ease}
+
+    /* ── Impact Cards ── */
+    .impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+    .icrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:22px;text-align:center}
+    .icrd-icon{font-size:36px;margin-bottom:10px}
+    .icrd-val{font-size:28px;font-weight:700;color:var(--green);line-height:1}
+    .icrd-lbl{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+
+    /* ── Benefit Cards ── */
+    .benefit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px}
+    .bcrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:18px;display:flex;gap:14px;align-items:flex-start}
+    .bicn{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;
+      justify-content:center;font-size:20px;flex-shrink:0}
+    .bbody h4{font-size:13px;font-weight:600;margin-bottom:3px}
+    .bbody p{font-size:11px;color:var(--muted);line-height:1.5}
+    .bhi{font-size:18px;font-weight:700;margin-top:3px}
+
+    /* ── Forecast Table ── */
+    .ftbl{width:100%;border-collapse:collapse;font-size:12px}
+    .ftbl th{background:var(--surface2);padding:9px 14px;text-align:left;font-weight:600;
+      color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+    .ftbl td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+    .ftbl tr:last-child td{border-bottom:none}
+    .ftbl tr:hover td{background:rgba(255,255,255,.02)}
+    .bgt{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+    .bgt-ist{background:rgba(245,158,11,.15);color:var(--amber)}
+    .bgt-pro{background:rgba(6,182,212,.15);color:var(--cyan)}
+
+    /* ── Responsive ── */
+    @media(max-width:768px){
+      .kpi-bar{grid-template-columns:repeat(3,1fr)}
+      .cgrid{grid-template-columns:1fr}
+      .impact-grid{grid-template-columns:1fr 1fr}
+      .benefit-grid{grid-template-columns:1fr}
+      .content{padding:14px 16px}
+      .hdr{padding:14px 16px}
+      .tabs{padding:0 16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────── -->
+<div class="hdr">
+  <div class="hdr-icon">☀️</div>
+  <div class="hdr-title">
+    <h1>Solar Dashboard</h1>
+    <p>Photovoltaik · Tesla Powerwall · Netzeinspeisung · Analyse 2022 – 2026</p>
+  </div>
+  <div class="hdr-badge">Datenbasis: 2022 – 2026</div>
+</div>
+
+<!-- ── Global KPI Bar ────────────────────────────────── -->
+<div class="kpi-bar">
+  <div class="kpi"><div class="kpi-v">36,4 MWh</div><div class="kpi-l">Solar gesamt</div></div>
+  <div class="kpi"><div class="kpi-v">10,4 MWh</div><div class="kpi-l">Jahres-Bestleistung</div></div>
+  <div class="kpi"><div class="kpi-v">4.980 €</div><div class="kpi-l">Ersparnisse kumuliert</div></div>
+  <div class="kpi"><div class="kpi-v">93,5 %</div><div class="kpi-l">Autarkie 2025</div></div>
+  <div class="kpi"><div class="kpi-v">3.572 kg</div><div class="kpi-l">CO₂ eingespart</div></div>
+</div>
+
+<!-- ── Tab Navigation ────────────────────────────────── -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('erzeugung',this)">⚡ Stromerzeugung</button>
+  <button class="tab-btn" onclick="showTab('verbrauch',this)">🏠 Verbrauch</button>
+  <button class="tab-btn" onclick="showTab('einspeisung',this)">🔌 Einspeisung</button>
+  <button class="tab-btn" onclick="showTab('batterie',this)">🔋 Batterie</button>
+  <button class="tab-btn" onclick="showTab('vorteile',this)">💰 Vorteile</button>
+  <button class="tab-btn" onclick="showTab('zukunft',this)">🔭 Zukunft</button>
+  <button class="tab-btn" onclick="showTab('klima',this)">🌱 Klimawirkung</button>
+</div>
+
+<!-- ── Tab Content ────────────────────────────────────── -->
+<div class="content">
+
+  <!-- ① Stromerzeugung ─────────────────────────────── -->
+  <div id="pane-erzeugung" class="pane active">
+    <div class="sec-hdr">
+      <h2>⚡ Stromerzeugung</h2>
+      <p>Solarenergieerzeugung durch Photovoltaikanlage — Jahres- &amp; Monatsverlauf</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Gesamterzeugung</div>
+        <div class="card-val">36,4 MWh</div>
+        <div class="card-sub">2022 – 2026 (laufend)</div>
+        <div class="badge-trend t-up">↑ Stabil seit 2023</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Bestes Jahr</div>
+        <div class="card-val" style="color:var(--cyan)">10,4 MWh</div>
+        <div class="card-sub">2024 &amp; 2025</div>
+        <div class="badge-trend t-eq">= Plateau erreicht</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">2026 (lfd.)</div>
+        <div class="card-val" style="color:var(--green)">3,2 MWh</div>
+        <div class="card-sub">Erstes Quartal</div>
+        <div class="badge-trend t-up">↑ Kurs: ~10,4 MWh</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Wachstum 22→23</div>
+        <div class="card-val" style="color:var(--violet)">+317 %</div>
+        <div class="card-sub">Erstes volles Betriebsjahr</div>
+        <div class="badge-trend t-up">↑ Vollausbau</div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Jahreserzeugung<span>MWh</span></div>
+        <div class="cbox"><canvas id="c-solar-annual"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Monatliche Verteilung<span>kWh Ø 2023–2025</span></div>
+        <div class="cbox"><canvas id="c-solar-monthly"></canvas></div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-top:18px">
+      <div class="ctitle">Solare Energiebilanz<span>Eigenverbrauch + Einspeisung MWh</span></div>
+      <div class="cbox sm"><canvas id="c-solar-balance"></canvas></div>
+    </div>
+    <div class="analysis">
+      <h4>Analyse — Stromerzeugung</h4>
+      <ul>
+        <li><strong>2022 (Inbetriebnahme):</strong> Nur 2,4 MWh — Anlage wurde unterjährig aufgeschaltet, daher deutlich unter dem Jahrespotenzial.</li>
+        <li><strong>2023–2025 (Vollbetrieb):</strong> Stabile 10,0–10,4 MWh/Jahr belegen eine zuverlässige und konsistente Anlagenleistung.</li>
+        <li><strong>Plateau-Analyse:</strong> Minimaler Zuwachs +0,4 MWh von 2023→2024 signalisiert, dass die Anlage ihr physikalisches Leistungsmaximum erreicht hat.</li>
+        <li><strong>Saisonalität:</strong> ~70 % der Jahresleistung wird April–September erzielt; Juni/Juli sind die Spitzenmonate (je ~14 %).</li>
+        <li><strong>Prognose 2026:</strong> Q1 = 3,2 MWh entspricht dem historischen Q1-Anteil (~30 %) → Volljahr ≈ 10,4 MWh realistisch.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ② Verbrauch ──────────────────────────────────── -->
+  <div id="pane-verbrauch" class="pane">
+    <div class="sec-hdr">
+      <h2>🏠 Verbrauch</h2>
+      <p>Haushaltsstromverbrauch, Eigenverbrauchsquellen und Netzabhängigkeit</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Gesamtverbrauch</div>
+        <div class="card-val">10,0 MWh</div>
+        <div class="card-sub">2022 – 2026 gesamt</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Autarkie 2025</div>
+        <div class="card-val" style="color:var(--green)">93,5 %</div>
+        <div class="card-sub">Nur 150 kWh aus Netz</div>
+        <div class="badge-trend t-up">↑ Jahresrekord</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Netzbezug 2025</div>
+        <div class="card-val" style="color:var(--cyan)">150 kWh</div>
+        <div class="card-sub">Jahresminimum</div>
+        <div class="badge-trend t-dn">↓ −69 % vs. 2022</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">⌀ Jahresverbrauch</div>
+        <div class="card-val" style="color:var(--violet)">2,5 MWh</div>
+        <div class="card-sub">Vollbetriebsjahre</div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Verbrauchsquellen je Jahr<span>gestapelt MWh</span></div>
+        <div class="cbox"><canvas id="c-cons-stacked"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Autarkiequote<span>% Eigenversorgung pro Jahr</span></div>
+        <div class="cbox"><canvas id="c-autarky"></canvas></div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-top:18px">
+      <div class="ctitle">Autarkie-Entwicklung Detail</div>
+      <div class="prog-list" id="prog-autarky"></div>
+    </div>
+    <div class="analysis">
+      <h4>Analyse — Verbrauch &amp; Eigenversorgung</h4>
+      <ul>
+        <li><strong>+30 Pp. Autarkiesteigerung:</strong> Von ~63 % (2022) auf 93,5 % (2025) — eine herausragende Entwicklung innerhalb von 3 Jahren.</li>
+        <li><strong>Powerwall-Effekt:</strong> Die Batterie ermöglichte den Sprung von ~84 % (2024) auf 93,5 % (2025), trotz leicht gesunkenem Verbrauch.</li>
+        <li><strong>Stabiler Verbrauch:</strong> 2,3–2,6 MWh/Jahr zeigen gleichbleibende Lebensgewohnheiten — keine energetischen Ausreißer.</li>
+        <li><strong>Netzbezug fast eliminiert:</strong> 150 kWh Restbezug entspricht ~12 Volllaststunden — faktisch netzunabhängig.</li>
+        <li><strong>2026-Trend:</strong> Hochrechnung auf ~12 % Netzbezug — weitgehende Eigenversorgung bleibt stabil.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ③ Einspeisung ────────────────────────────────── -->
+  <div id="pane-einspeisung" class="pane">
+    <div class="sec-hdr">
+      <h2>🔌 Netzeinspeisung</h2>
+      <p>Überschussstrom ins öffentliche Netz — Menge, Erlöse und Versorgungsleistung</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Einspeisung gesamt</div>
+        <div class="card-val">27,0 MWh</div>
+        <div class="card-sub">2022 – 2026</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Einspeisevergütung</div>
+        <div class="card-val" style="color:var(--green)">2.160 €</div>
+        <div class="card-sub">@ 8 ct/kWh (Schätzung)</div>
+        <div class="badge-trend t-up">↑ Passives Einkommen</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Spitzenjahr</div>
+        <div class="card-val" style="color:var(--cyan)">8,0 MWh</div>
+        <div class="card-sub">2024</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Einspeiserate ⌀</div>
+        <div class="card-val" style="color:var(--violet)">74 %</div>
+        <div class="card-sub">der Erzeugung</div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Jährliche Einspeisung<span>MWh</span></div>
+        <div class="cbox"><canvas id="c-feedin-annual"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Erzeugung vs. Einspeisung<span>Eigenverbrauchsanteil sichtbar</span></div>
+        <div class="cbox"><canvas id="c-feedin-vs-solar"></canvas></div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-top:18px">
+      <div class="ctitle">Jährliche Einspeisevergütung<span>Geschätzte Einnahmen €</span></div>
+      <div class="cbox sm"><canvas id="c-feedin-revenue"></canvas></div>
+    </div>
+    <div class="analysis">
+      <h4>Analyse — Netzeinspeisung</h4>
+      <ul>
+        <li><strong>Hoher Überschuss:</strong> Ø 74 % der erzeugten Energie werden eingespeist — das System produziert deutlich mehr als der Haushalt benötigt.</li>
+        <li><strong>Passives Einkommen:</strong> Geschätzte 2.160 € Vergütung über die Gesamtlaufzeit bei 8 ct/kWh (aktueller DE-Satz).</li>
+        <li><strong>Netzversorgung:</strong> 27 MWh eingespeister Solarstrom versorgen rechnerisch ca. 7 Durchschnittshaushalte ein Jahr lang.</li>
+        <li><strong>Optimierungspotenzial:</strong> Größerer Batteriespeicher oder E-Fahrzeug könnte Eigenverbrauch um 10–20 % steigern und Einspeiseverluste senken.</li>
+        <li><strong>Erlösprognose 2030:</strong> Bei jährlich ~7,8 MWh Einspeisung werden bis 2030 weitere ~2.500 € Vergütung erzielt.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ④ Batterie ───────────────────────────────────── -->
+  <div id="pane-batterie" class="pane">
+    <div class="sec-hdr">
+      <h2>🔋 Batterie-Nutzung (Tesla Powerwall)</h2>
+      <p>Speicherung, Entladung und Einfluss auf Autarkie und Netzbezug</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Gesamt aus Powerwall</div>
+        <div class="card-val">2,94 MWh</div>
+        <div class="card-sub">2022 – 2026</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Spitzenjahr</div>
+        <div class="card-val" style="color:var(--violet)">1,1 MWh</div>
+        <div class="card-sub">2025</div>
+        <div class="badge-trend t-up">↑ Zunehmende Nutzung</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Powerwall-Anteil ⌀</div>
+        <div class="card-val" style="color:var(--cyan)">~43 %</div>
+        <div class="card-sub">des Haushaltsverbrauchs</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Netzbezug ersetzt</div>
+        <div class="card-val" style="color:var(--green)">~882 €</div>
+        <div class="card-sub">Gespartes Netzstrom-Budget</div>
+        <div class="badge-trend t-up">↑ 2,94 MWh × 30 ct</div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Powerwall-Entladung je Jahr<span>MWh</span></div>
+        <div class="cbox"><canvas id="c-bat-annual"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Powerwall vs. Netzbezug<span>Batterie verdrängt Grid (MWh)</span></div>
+        <div class="cbox"><canvas id="c-bat-vs-grid"></canvas></div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-top:18px">
+      <div class="ctitle">Powerwall-Anteil am Jahresverbrauch</div>
+      <div class="prog-list" id="prog-battery"></div>
+    </div>
+    <div class="analysis">
+      <h4>Analyse — Powerwall</h4>
+      <ul>
+        <li><strong>Stetige Steigerung:</strong> Powerwall-Nutzung von 0,38 MWh (2022) auf 1,1 MWh (2025) — Optimierung von Lade-/Entlade-Strategien wirkt.</li>
+        <li><strong>Inverse Korrelation:</strong> Mit jedem MWh mehr Powerwall-Entladung sinkt der Netzbezug proportional — perfekte Substitution.</li>
+        <li><strong>Amortisation:</strong> Die Batterie hat durch Netzersatz bereits ~882 € erwirtschaftet. Annahme: 15 Ct/kWh Mehrwert ggü. Einspeisung.</li>
+        <li><strong>Erweiterungspotenzial:</strong> Zweite Powerwall würde Autarkie auf ~97–99 % heben und Netzbezug auf unter 30 kWh/Jahr senken.</li>
+        <li><strong>Saisonaler Betrieb:</strong> Sommer: tägliches Laden/Entladen. Winter: Überbrückung der Nacht-/Morgenstunden bei schwacher Einstrahlung.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ⑤ Vorteile ───────────────────────────────────── -->
+  <div id="pane-vorteile" class="pane">
+    <div class="sec-hdr">
+      <h2>💰 Vorteile &amp; Ersparnisse</h2>
+      <p>Wirtschaftliche, energetische und strategische Vorteile der Anlage auf einen Blick</p>
+    </div>
+
+    <div class="benefit-grid">
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(245,158,11,.15)">💰</div>
+        <div class="bbody">
+          <h4>Finanzielle Ersparnis</h4>
+          <p>Eigenverbrauch + Einspeisevergütung kombiniert.</p>
+          <div class="bhi" style="color:var(--amber)">4.980 €</div>
+          <p style="margin-top:3px">Kumuliert 2022–2026</p>
+        </div>
+      </div>
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(16,185,129,.15)">🌍</div>
+        <div class="bbody">
+          <h4>CO₂-Einsparung</h4>
+          <p>Vermiedene Emissionen durch solaren Eigenverbrauch.</p>
+          <div class="bhi" style="color:var(--green)">3.572 kg</div>
+          <p style="margin-top:3px">≈ 170 Bäume pro Jahr</p>
+        </div>
+      </div>
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(6,182,212,.15)">🔒</div>
+        <div class="bbody">
+          <h4>Energieunabhängigkeit</h4>
+          <p>Nahezu vollständige Entkopplung vom Stromnetz.</p>
+          <div class="bhi" style="color:var(--cyan)">93,5 %</div>
+          <p style="margin-top:3px">Autarkie-Quote 2025</p>
+        </div>
+      </div>
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(139,92,246,.15)">📈</div>
+        <div class="bbody">
+          <h4>Immobilien-Wertsteigerung</h4>
+          <p>PV + Speicher erhöhen den Marktwert der Immobilie.</p>
+          <div class="bhi" style="color:var(--violet)">+5–10 %</div>
+          <p style="margin-top:3px">Typische Wertsteigerung DE</p>
+        </div>
+      </div>
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(239,68,68,.15)">⚡</div>
+        <div class="bbody">
+          <h4>Preisstabilität</h4>
+          <p>Eigenverbrauch ist vom Börsenpreis entkoppelt (Ø +5 %/Jahr DE).</p>
+          <div class="bhi" style="color:var(--red)">Gesichert</div>
+          <p style="margin-top:3px">Kein Preisrisiko für ~93 %</p>
+        </div>
+      </div>
+      <div class="bcrd">
+        <div class="bicn" style="background:rgba(245,158,11,.15)">🔋</div>
+        <div class="bbody">
+          <h4>Blackout-Schutz</h4>
+          <p>Powerwall versorgt Haushalt auch bei Netzausfall.</p>
+          <div class="bhi" style="color:var(--amber)">~18–24 h</div>
+          <p style="margin-top:3px">Notstrom-Autonomie</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Jährliche Gesamtersparnis<span>€ (Eigenverbrauch + Einspeisung)</span></div>
+        <div class="cbox"><canvas id="c-savings"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Stromkosten: ohne vs. mit Solar<span>€ pro Jahr</span></div>
+        <div class="cbox"><canvas id="c-cost-cmp"></canvas></div>
+      </div>
+    </div>
+    <div class="analysis">
+      <h4>Analyse — Wirtschaftlichkeit</h4>
+      <ul>
+        <li><strong>ROI-Berechnung:</strong> Bei Anlagekosten ~15.000 € und Ø 1.245 €/Jahr Ersparnis → Amortisation in ~12 Jahren (ohne Förderungen).</li>
+        <li><strong>Steigende Rendite:</strong> Jede 5 %-Strompreiserhöhung erhöht den realen Ertrag des Eigenverbrauchs — die Anlage wird wertvoller.</li>
+        <li><strong>2025 als Wendepunkt:</strong> 93,5 % Autarkie = faktische Entkopplung von Energiepreis-Schwankungen für fast den gesamten Verbrauch.</li>
+        <li><strong>Förderhinweis:</strong> KfW 270, Einspeisevergütung EEG, und ggf. steuerliche Begünstigung können die Amortisationszeit deutlich verkürzen.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ⑥ Zukunft ────────────────────────────────────── -->
+  <div id="pane-zukunft" class="pane">
+    <div class="sec-hdr">
+      <h2>🔭 Zukunft &amp; Prognosen</h2>
+      <p>Trendanalyse, Hochrechnungen und Optimierungsempfehlungen 2026–2030</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Prognose 2026</div>
+        <div class="card-val">10,4 MWh</div>
+        <div class="card-sub">Volljahres-Hochrechnung</div>
+        <div class="badge-trend t-eq">= Plateau stabil</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Potenzial Autarkie</div>
+        <div class="card-val" style="color:var(--green)">98 %</div>
+        <div class="card-sub">Mit 2× Powerwall</div>
+        <div class="badge-trend t-up">↑ Fast vollständig</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Prognose 2027–2030</div>
+        <div class="card-val" style="color:var(--cyan)">~41 MWh</div>
+        <div class="card-sub">4-Jahres-Summe</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Kumuliert bis 2030</div>
+        <div class="card-val" style="color:var(--violet)">~11.500 €</div>
+        <div class="card-sub">Geschätzte Gesamtersparnis</div>
+      </div>
+    </div>
+
+    <div class="ccrd">
+      <div class="ctitle">Erzeugungs-Prognose 2022–2030<span>Ist-Werte (amber) + Projektion (cyan)</span></div>
+      <div class="cbox tall"><canvas id="c-forecast"></canvas></div>
+    </div>
+
+    <div class="ccrd">
+      <div class="ctitle">Prognose-Tabelle 2022–2030</div>
+      <table class="ftbl">
+        <thead>
+          <tr>
+            <th>Jahr</th><th>Status</th><th>Erzeugung</th>
+            <th>Eigenverbrauch</th><th>Autarkie</th>
+            <th>Ersparnis (€)</th><th>CO₂ (kg)</th>
+          </tr>
+        </thead>
+        <tbody id="ftbl-body"></tbody>
+      </table>
+    </div>
+
+    <div class="analysis">
+      <h4>Analyse — Zukunftsperspektiven</h4>
+      <ul>
+        <li><strong>Stabiles Plateau:</strong> Die Anlage erzeugt konstant ~10,4 MWh/Jahr — Steigerungen nur durch physische Erweiterung möglich.</li>
+        <li><strong>Empfehlung 1 – 2. Powerwall:</strong> Erhöht Autarkie auf ~97–98 % und sichert auch bewölkte Winterperioden vollständig ab.</li>
+        <li><strong>Empfehlung 2 – E-Mobilität:</strong> Laden mit Solarstrom würde den Eigenverbrauch um 1.500–3.000 kWh/Jahr steigern — erhebliche Zusatzersparnis.</li>
+        <li><strong>Empfehlung 3 – Modulreinigung:</strong> Jährliche Reinigung + Monitoring bringen 2–5 % Mehrertrag ohne Investitionskosten.</li>
+        <li><strong>Inflation-Hedge:</strong> Bei 5 %/Jahr Strompreissteigerung steigt der Wert des Eigenverbrauchs bis 2030 von 30 auf ~40 ct/kWh — Anlage wird profitabler.</li>
+        <li><strong>Degradation:</strong> PV-Module verlieren ~0,5 %/Jahr an Leistung → bis 2030 ca. −2 % Ertrag gegenüber 2024. Kalkuliert in der Prognose.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ⑦ Klimawirkung ──────────────────────────────── -->
+  <div id="pane-klima" class="pane">
+    <div class="sec-hdr">
+      <h2>🌱 Klimawirkung</h2>
+      <p>CO₂-Bilanz, Umweltbeitrag und ökologischer Fußabdruck der Solaranlage</p>
+    </div>
+
+    <div class="impact-grid">
+      <div class="icrd"><div class="icrd-icon">🌿</div><div class="icrd-val">3.572 kg</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
+      <div class="icrd"><div class="icrd-icon">🌳</div><div class="icrd-val">170</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
+      <div class="icrd"><div class="icrd-icon">🚗</div><div class="icrd-val">29.767 km</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
+      <div class="icrd"><div class="icrd-icon">✈️</div><div class="icrd-val">4,5×</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
+      <div class="icrd"><div class="icrd-icon">💡</div><div class="icrd-val">9,4 MWh</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
+      <div class="icrd"><div class="icrd-icon">⚡</div><div class="icrd-val">36,4 MWh</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">CO₂-Einsparung je Jahr<span>kg CO₂</span></div>
+        <div class="cbox"><canvas id="c-co2-annual"></canvas></div>
+      </div>
+      <div class="ccrd" style="margin-bottom:0">
+        <div class="ctitle">Kumulierte CO₂-Einsparung<span>kg — Gesamtbilanz</span></div>
+        <div class="cbox"><canvas id="c-co2-cum"></canvas></div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-top:18px">
+      <div class="ctitle">Klimaziel-Fortschritt</div>
+      <div class="prog-list" id="prog-climate"></div>
+    </div>
+    <div class="analysis green">
+      <h4>Klimaanalyse</h4>
+      <ul>
+        <li><strong>Wachsende Wirkung:</strong> CO₂-Einsparung stieg von 342 kg (2022) auf 988 kg (2025) — fast dreifache Klimaentlastung durch Systemoptimierung.</li>
+        <li><strong>Netzeinspeisung als Bonus:</strong> Die 27 MWh eingespeister Solarstrom verdrängen zusätzlich ca. 10 t CO₂ aus dem deutschen Strommix — nicht in der eigenen Bilanz, aber real.</li>
+        <li><strong>Lebenszyklus-Bilanz:</strong> Produktions-CO₂ einer PV-Anlage (~600–1.000 kg CO₂/kWp) ist bereits amortisiert — die Anlage ist ab Jahr 2 CO₂-positiv.</li>
+        <li><strong>Prognose bis 2030:</strong> Weitere ~4.000 kg CO₂ werden eingespart → Gesamtbilanz 2022–2030: ~7.500 kg CO₂ vermieden.</li>
+        <li><strong>Referenz:</strong> CO₂-Faktor DE Stromnetz: 380 g/kWh (Umweltbundesamt 2023). Mit Energiewende sinkt dieser Wert weiter — Solarstrom bleibt überlegen.</li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ─── Rohdaten ──────────────────────────────────────────────────────────────
+const years     = [2022, 2023, 2024, 2025, 2026];
+const labels    = years.map(String);
+const solar     = [2.4,  10.0, 10.4, 10.4, 3.2];
+const home      = [1.3,   2.6,  2.6,  2.3, 1.2];
+const powerwall = [0.38,  1.0,  1.00, 1.1, 0.46];
+const fromGrid  = [0.48,  0.54, 0.42, 0.15, 0.17];
+const toGrid    = [1.5,   7.7,  8.0,  7.8,  2.0];
+
+// ─── Abgeleitete Werte ────────────────────────────────────────────────────
+const selfConsumed = solar.map((s,i) => +(s - toGrid[i]).toFixed(2));
+const solarDirect  = home.map((h,i) => +(h - powerwall[i] - fromGrid[i]).toFixed(2));
+const autarky      = home.map((h,i) => +((h - fromGrid[i]) / h * 100).toFixed(1));
+const co2Saved     = selfConsumed.map(sc => +(sc * 1000 * 0.38).toFixed(0));
+const savings      = selfConsumed.map((sc,i) => +(sc*1000*0.30 + toGrid[i]*1000*0.08).toFixed(0));
+const feedRev      = toGrid.map(tg => +(tg*1000*0.08).toFixed(0));
+const costWithout  = home.map(h => +(h*1000*0.30).toFixed(0));
+const costWith     = fromGrid.map(fg => +(fg*1000*0.30).toFixed(0));
+
+// ─── Monatliche Verteilung (Ø Vollbetriebsjahre 2023-2025) ───────────────
+const mLbls = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const mFact = [0.03,0.05,0.08,0.11,0.13,0.14,0.13,0.11,0.09,0.06,0.04,0.03];
+const avgY  = (10.0+10.4+10.4)/3;
+const mKwh  = mFact.map(f => +(f*avgY*1000).toFixed(0));
+
+// ─── Prognosedaten 2022-2030 ──────────────────────────────────────────────
+const fYears  = [2022,2023,2024,2025,2026,2027,2028,2029,2030];
+const fSolar  = [2.4, 10.0,10.4,10.4,10.4,10.3,10.2,10.1,10.0];
+const fToGrid = [1.5,  7.7, 8.0, 7.8, 7.8, 7.7, 7.6, 7.5, 7.4];
+const fIsAct  = [true,true,true,true,false,false,false,false,false];
+const fAutark = [63.1,79.2,83.8,93.5,93.5,94,95,96,97];
+
+// ─── Chart.js Defaults ────────────────────────────────────────────────────
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#334155';
+Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size = 12;
+const gridCfg = {color:'rgba(51,65,85,.5)',drawBorder:false};
+const tooltipCfg = {mode:'index',intersect:false};
+const legendCfg = {position:'top',labels:{boxWidth:11,padding:14}};
+
+function mkBar(el, lbl, data, bgCol, bdCol, opts={}) {
+  return new Chart(el, {
+    type:'bar',
+    data:{labels, datasets:[{label:lbl,data,backgroundColor:bgCol,borderColor:bdCol,borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:tooltipCfg,...(opts.plugins||{})},
+      scales:{x:{grid:gridCfg},y:{grid:gridCfg,...(opts.y||{})}}}
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// Tab 1 – Stromerzeugung
+// ══════════════════════════════════════════════════════
+mkBar('c-solar-annual','Solarenergie (MWh)',solar,
+  ['rgba(245,158,11,.25)','rgba(245,158,11,.55)','rgba(245,158,11,.8)','rgba(245,158,11,.9)','rgba(245,158,11,.4)'],
+  '#f59e0b');
+
+new Chart(document.getElementById('c-solar-monthly'),{
+  type:'bar',
+  data:{labels:mLbls,datasets:[{label:'kWh',data:mKwh,
+    backgroundColor:mFact.map(f=>`rgba(245,158,11,${.15+f*4.5})`),
+    borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' kWh'}}},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}
+});
+
+new Chart(document.getElementById('c-solar-balance'),{
+  type:'bar',
+  data:{labels,datasets:[
+    {label:'Eigenverbrauch (MWh)',data:selfConsumed,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
+    {label:'Einspeisung (MWh)',data:toGrid,backgroundColor:'rgba(6,182,212,.7)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
+});
+
+// ══════════════════════════════════════════════════════
+// Tab 2 – Verbrauch
+// ══════════════════════════════════════════════════════
+new Chart(document.getElementById('c-cons-stacked'),{
+  type:'bar',
+  data:{labels,datasets:[
+    {label:'Solar direkt (MWh)',data:solarDirect,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+    {label:'Powerwall (MWh)',data:powerwall,backgroundColor:'rgba(139,92,246,.75)',borderColor:'#8b5cf6',borderWidth:1,borderRadius:4},
+    {label:'Netz (MWh)',data:fromGrid,backgroundColor:'rgba(239,68,68,.75)',borderColor:'#ef4444',borderWidth:1,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
+});
+
+new Chart(document.getElementById('c-autarky'),{
+  type:'line',
+  data:{labels,datasets:[{label:'Autarkie (%)',data:autarky,
+    borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',
+    fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' %'}}},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}
+});
+
+// Progress bars – Autarkie
+const autarkyColors=['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316'];
+document.getElementById('prog-autarky').innerHTML = years.map((y,i)=>`
+  <div class="prog-item">
+    <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${autarky[i]} %</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${autarky[i]}%;background:${autarkyColors[i]}"></div></div>
+  </div>`).join('');
+
+// ══════════════════════════════════════════════════════
+// Tab 3 – Einspeisung
+// ══════════════════════════════════════════════════════
+mkBar('c-feedin-annual','Einspeisung (MWh)',toGrid,
+  ['rgba(6,182,212,.25)','rgba(6,182,212,.55)','rgba(6,182,212,.8)','rgba(6,182,212,.9)','rgba(6,182,212,.4)'],
+  '#06b6d4');
+
+new Chart(document.getElementById('c-feedin-vs-solar'),{
+  type:'bar',
+  data:{labels,datasets:[
+    {label:'Eigenverbrauch (MWh)',data:selfConsumed,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+    {label:'Einspeisung (MWh)',data:toGrid,backgroundColor:'rgba(6,182,212,.75)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
+});
+
+mkBar('c-feedin-revenue','Vergütung (€)',feedRev,
+  'rgba(16,185,129,.7)','#10b981',
+  {y:{ticks:{callback:v=>v+' €'}}});
+
+// ══════════════════════════════════════════════════════
+// Tab 4 – Batterie
+// ══════════════════════════════════════════════════════
+mkBar('c-bat-annual','Powerwall (MWh)',powerwall,
+  ['rgba(139,92,246,.25)','rgba(139,92,246,.5)','rgba(139,92,246,.7)','rgba(139,92,246,.9)','rgba(139,92,246,.5)'],
+  '#8b5cf6');
+
+new Chart(document.getElementById('c-bat-vs-grid'),{
+  type:'line',
+  data:{labels,datasets:[
+    {label:'Powerwall (MWh)',data:powerwall,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#8b5cf6'},
+    {label:'Netzbezug (MWh)',data:fromGrid,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg}}}
+});
+
+document.getElementById('prog-battery').innerHTML = years.map((y,i)=>{
+  const pct = +(powerwall[i]/home[i]*100).toFixed(1);
+  return `<div class="prog-item">
+    <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${pct} % Powerwall-Anteil</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:#8b5cf6"></div></div>
+  </div>`;
+}).join('');
+
+// ══════════════════════════════════════════════════════
+// Tab 5 – Vorteile
+// ══════════════════════════════════════════════════════
+new Chart(document.getElementById('c-savings'),{
+  type:'bar',
+  data:{labels,datasets:[
+    {label:'Eigenverbrauch-Ersparnis (€)',data:selfConsumed.map(sc=>+(sc*1000*0.30).toFixed(0)),backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+    {label:'Einspeisevergütung (€)',data:feedRev,backgroundColor:'rgba(16,185,129,.75)',borderColor:'#10b981',borderWidth:1,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg,ticks:{callback:v=>v+' €'}}}}
+});
+
+new Chart(document.getElementById('c-cost-cmp'),{
+  type:'line',
+  data:{labels,datasets:[
+    {label:'Ohne Solar (€)',data:costWithout,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'},
+    {label:'Mit Solar (€)',data:costWith,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+c.raw+' €'}}},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg,ticks:{callback:v=>v+' €'}}}}
+});
+
+// ══════════════════════════════════════════════════════
+// Tab 6 – Zukunft
+// ══════════════════════════════════════════════════════
+new Chart(document.getElementById('c-forecast'),{
+  type:'bar',
+  data:{
+    labels:fYears.map(String),
+    datasets:[
+      {label:'Ist-Wert (MWh)',data:fSolar.map((v,i)=>fIsAct[i]?v:null),backgroundColor:'rgba(245,158,11,.8)',borderColor:'#f59e0b',borderWidth:2,borderRadius:5},
+      {label:'Prognose (MWh)',data:fSolar.map((v,i)=>!fIsAct[i]?v:null),backgroundColor:'rgba(6,182,212,.5)',borderColor:'#06b6d4',borderWidth:2,borderRadius:5}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:legendCfg,tooltip:tooltipCfg},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg,min:0,title:{display:true,text:'MWh',color:'#94a3b8'}}}}
+});
+
+const tb = document.getElementById('ftbl-body');
+fYears.forEach((y,i)=>{
+  const sc  = +(fSolar[i]-fToGrid[i]).toFixed(1);
+  const sav = +(sc*1000*0.30+fToGrid[i]*1000*0.08).toFixed(0);
+  const co2 = +(sc*1000*0.38).toFixed(0);
+  const badge = fIsAct[i]
+    ? '<span class="bgt bgt-ist">Ist</span>'
+    : '<span class="bgt bgt-pro">Prognose</span>';
+  tb.innerHTML += `<tr>
+    <td><strong>${y}</strong></td>
+    <td>${badge}</td>
+    <td>${fSolar[i].toFixed(1)} MWh</td>
+    <td>${sc.toFixed(1)} MWh</td>
+    <td>${fAutark[i]} %</td>
+    <td>${sav.toLocaleString('de-DE')} €</td>
+    <td>${co2.toLocaleString('de-DE')} kg</td>
+  </tr>`;
+});
+
+// ══════════════════════════════════════════════════════
+// Tab 7 – Klimawirkung
+// ══════════════════════════════════════════════════════
+mkBar('c-co2-annual','CO₂ eingespart (kg)',co2Saved,
+  ['rgba(16,185,129,.25)','rgba(16,185,129,.5)','rgba(16,185,129,.7)','rgba(16,185,129,.9)','rgba(16,185,129,.5)'],
+  '#10b981');
+
+const cumCO2 = co2Saved.reduce((a,v)=>[...a,(a[a.length-1]||0)+v],[]);
+new Chart(document.getElementById('c-co2-cum'),{
+  type:'line',
+  data:{labels,datasets:[{label:'Kumuliert (kg)',data:cumCO2,
+    borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.15)',
+    fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:gridCfg},y:{grid:gridCfg,ticks:{callback:v=>v+' kg'}}}}
+});
+
+const climGoals=[
+  {lbl:'CO₂-Einsparung 2025 (Ziel: 1.000 kg)',v:988,max:1000,col:'#10b981'},
+  {lbl:'Autarkie 2025 (Ziel: 95 %)',v:93.5,max:95,col:'#06b6d4'},
+  {lbl:'Kumulierte Ersparnis (Ziel: 5.000 €)',v:4980,max:5000,col:'#f59e0b'},
+  {lbl:'CO₂-Gesamtziel 2022–2026 (Ziel: 4.000 kg)',v:3572,max:4000,col:'#8b5cf6'},
+];
+document.getElementById('prog-climate').innerHTML = climGoals.map(g=>{
+  const pct = Math.min(100,(g.v/g.max*100)).toFixed(1);
+  return `<div class="prog-item">
+    <div class="prog-hdr"><span class="prog-lbl">${g.lbl}</span><span class="prog-val">${pct} %</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.col}"></div></div>
+  </div>`;
+}).join('');
+
+// ─── Tab Switching ────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
