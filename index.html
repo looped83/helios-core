@@ -127,6 +127,79 @@
     .bgt-ist{background:rgba(245,158,11,.15);color:var(--amber)}
     .bgt-pro{background:rgba(6,182,212,.15);color:var(--cyan)}
 
+    /* ── Upload Button ── */
+    .upload-btn{background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
+      color:var(--cyan);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;
+      cursor:pointer;white-space:nowrap;margin-left:8px;transition:background .2s;user-select:none;
+      display:inline-flex;align-items:center;gap:6px}
+    .upload-btn:hover{background:rgba(6,182,212,.28)}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:24px;right:24px;background:rgba(16,185,129,.95);color:#fff;
+      padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;
+      opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;
+      pointer-events:none;max-width:340px}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast.err{background:rgba(239,68,68,.95)}
+
+    /* ── Drag overlay ── */
+    body.drag-over::after{content:'CSV hier ablegen';position:fixed;inset:0;
+      background:rgba(6,182,212,.15);border:3px dashed var(--cyan);z-index:8888;
+      display:flex;align-items:center;justify-content:center;font-size:28px;
+      font-weight:700;color:var(--cyan);pointer-events:none}
+
+    /* ── Price Bar ── */
+    .price-bar{background:#111827;border-bottom:1px solid var(--border);
+      padding:9px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .pi{display:flex;align-items:center;gap:7px;font-size:12px}
+    .pi label{color:var(--muted);white-space:nowrap}
+    .pi-wrap{display:flex;align-items:center;gap:4px}
+    .pi-wrap input[type=number]{width:68px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-weight:600;
+      text-align:center;outline:none;-moz-appearance:textfield}
+    .pi-wrap input[type=number]::-webkit-inner-spin-button{opacity:.4}
+    .pi-wrap input[type=number]:focus{border-color:var(--amber)}
+    .pi-wrap span{color:var(--muted);font-size:11px}
+    .pi-sep{width:1px;height:22px;background:var(--border);margin:0 2px}
+    .price-hint{color:var(--muted);font-size:11px;margin-left:auto;font-style:italic}
+
+    /* ── Score Widget ── */
+    .score-wrap{display:flex;align-items:center;gap:20px;padding:16px;
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:22px}
+    .score-svg-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+    .score-svg{width:100px;height:100px}
+    .score-num-big{font-size:40px;font-weight:800;line-height:1;text-align:center}
+    .score-denom{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center}
+    .score-info{flex:1;min-width:0}
+    .score-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .score-rating{font-size:14px;font-weight:700;margin-bottom:10px}
+    .score-comp{display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:5px}
+    .score-comp-lbl{color:var(--muted);width:130px;flex-shrink:0;white-space:nowrap}
+    .score-comp-bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+    .score-comp-fill{height:100%;border-radius:3px;transition:width .7s ease}
+    .score-comp-val{font-weight:600;width:32px;text-align:right}
+
+    /* ── Month selector ── */
+    .month-sel-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
+    .month-sel-wrap label{color:var(--muted)}
+    .month-sel-wrap select{background:var(--surface2);border:1px solid var(--border);
+      border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;cursor:pointer;outline:none}
+    .month-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;
+      background:rgba(6,182,212,.15);color:var(--cyan);margin-left:8px;vertical-align:middle}
+
+    /* ── EVQ ── */
+    .evq-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+    .evq-crd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:16px;text-align:center}
+    .evq-pct{font-size:30px;font-weight:700;line-height:1}
+    .evq-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* ── ROI Box ── */
+    .roi-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:18px;margin-top:18px}
+    .roi-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
+    .roi-lbl{color:var(--muted)}.roi-val{font-weight:600;color:var(--text)}
+
     /* ── Responsive ── */
     @media(max-width:768px){
       .kpi-bar{grid-template-columns:repeat(3,1fr)}
@@ -148,16 +221,49 @@
     <h1>Solar Dashboard</h1>
     <p>Photovoltaik · Tesla Powerwall · Netzeinspeisung · Analyse 2022 – 2026</p>
   </div>
-  <div class="hdr-badge">Datenbasis: 2022 – 2026</div>
+  <div class="hdr-badge" id="hdr-badge">Datenbasis: 2022 – 2026</div>
+  <label class="upload-btn" title="Neue CSV laden — auch per Drag &amp; Drop auf die Seite">
+    📂 CSV laden
+    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none">
+  </label>
 </div>
+<div id="toast" class="toast"></div>
 
 <!-- ── Global KPI Bar ────────────────────────────────── -->
 <div class="kpi-bar">
-  <div class="kpi"><div class="kpi-v">36,4 MWh</div><div class="kpi-l">Solar gesamt</div></div>
-  <div class="kpi"><div class="kpi-v">10,4 MWh</div><div class="kpi-l">Jahres-Bestleistung</div></div>
-  <div class="kpi"><div class="kpi-v">4.980 €</div><div class="kpi-l">Ersparnisse kumuliert</div></div>
-  <div class="kpi"><div class="kpi-v">93,5 %</div><div class="kpi-l">Autarkie 2025</div></div>
-  <div class="kpi"><div class="kpi-v">3.572 kg</div><div class="kpi-l">CO₂ eingespart</div></div>
+  <div class="kpi"><div class="kpi-v" id="kpi-solar">—</div><div class="kpi-l">Solar gesamt</div></div>
+  <div class="kpi"><div class="kpi-v" id="kpi-best">—</div><div class="kpi-l">Jahres-Bestleistung</div></div>
+  <div class="kpi"><div class="kpi-v" id="kpi-savings">—</div><div class="kpi-l">Ersparnisse kumuliert</div></div>
+  <div class="kpi"><div class="kpi-v" id="kpi-autarky">—</div><div class="kpi-l">Autarkie-Rekord</div></div>
+  <div class="kpi"><div class="kpi-v" id="kpi-co2">—</div><div class="kpi-l">CO₂ eingespart</div></div>
+</div>
+
+<!-- ── Price Settings Bar ────────────────────────────── -->
+<div class="price-bar">
+  <div class="pi">
+    <label>⚡ Strompreis</label>
+    <div class="pi-wrap">
+      <input type="number" id="inp-buy" value="30" min="1" max="150" step="0.5">
+      <span>ct/kWh</span>
+    </div>
+  </div>
+  <div class="pi-sep"></div>
+  <div class="pi">
+    <label>🔌 Einspeisevergütung</label>
+    <div class="pi-wrap">
+      <input type="number" id="inp-sell" value="8" min="1" max="50" step="0.5">
+      <span>ct/kWh</span>
+    </div>
+  </div>
+  <div class="pi-sep"></div>
+  <div class="pi">
+    <label>🏗 Anlagekosten (ROI)</label>
+    <div class="pi-wrap">
+      <input type="number" id="inp-cost" value="15000" min="1000" max="200000" step="500">
+      <span>€</span>
+    </div>
+  </div>
+  <span class="price-hint">Werte anpassen → alle Berechnungen aktualisieren live</span>
 </div>
 
 <!-- ── Tab Navigation ────────────────────────────────── -->
@@ -214,7 +320,12 @@
         <div class="cbox"><canvas id="c-solar-annual"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Monatliche Verteilung<span>kWh Ø 2023–2025</span></div>
+        <div class="ctitle">Monatliche Verteilung<span id="monthly-chart-sub">kWh Ø Vollbetriebsjahre</span></div>
+        <div id="month-sel-wrap" class="month-sel-wrap" style="display:none">
+          <label>Jahr:</label>
+          <select id="month-year-sel"></select>
+          <span class="month-badge">Echte Monatsdaten</span>
+        </div>
         <div class="cbox"><canvas id="c-solar-monthly"></canvas></div>
       </div>
     </div>
@@ -222,6 +333,25 @@
       <div class="ctitle">Solare Energiebilanz<span>Eigenverbrauch + Einspeisung MWh</span></div>
       <div class="cbox sm"><canvas id="c-solar-balance"></canvas></div>
     </div>
+
+    <!-- EVQ -->
+    <div class="evq-grid">
+      <div class="evq-crd">
+        <div class="card-lbl">Eigenverbrauchsquote (aktuell)</div>
+        <div class="evq-pct" id="evq-last" style="color:var(--amber)">—</div>
+        <div class="evq-sub">% der <em>erzeugten</em> Solar-kWh selbst genutzt</div>
+      </div>
+      <div class="evq-crd">
+        <div class="card-lbl">Autarkie (aktuell)</div>
+        <div class="evq-pct" id="evq-autarky" style="color:var(--green)">—</div>
+        <div class="evq-sub">% des <em>Verbrauchs</em> aus eigener Erzeugung</div>
+      </div>
+    </div>
+    <div class="ccrd" style="margin-bottom:20px">
+      <div class="ctitle">Eigenverbrauchsquote vs. Autarkie<span>% — Zwei Seiten der Systemeffizienz</span></div>
+      <div class="cbox sm"><canvas id="c-evq"></canvas></div>
+    </div>
+
     <div class="analysis">
       <h4>Analyse — Stromerzeugung</h4>
       <ul>
@@ -239,6 +369,25 @@
     <div class="sec-hdr">
       <h2>🏠 Verbrauch</h2>
       <p>Haushaltsstromverbrauch, Eigenverbrauchsquellen und Netzabhängigkeit</p>
+    </div>
+
+    <!-- Score Widget -->
+    <div class="score-wrap" id="score-widget">
+      <div class="score-svg-wrap">
+        <svg class="score-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#263449" stroke-width="12"/>
+          <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="#10b981" stroke-width="12"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease,stroke .4s"/>
+        </svg>
+        <div class="score-num-big" id="score-num" style="color:var(--green)">—</div>
+        <div class="score-denom">/ 100</div>
+      </div>
+      <div class="score-info">
+        <div class="score-title">Netz-Unabhängigkeits-Score</div>
+        <div class="score-rating" id="score-rating">—</div>
+        <div id="score-breakdown"></div>
+      </div>
     </div>
 
     <div class="cards">
@@ -490,6 +639,10 @@
         <li><strong>Förderhinweis:</strong> KfW 270, Einspeisevergütung EEG, und ggf. steuerliche Begünstigung können die Amortisationszeit deutlich verkürzen.</li>
       </ul>
     </div>
+    <div class="roi-box" id="roi-box">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">🏗 Amortisations-Rechner <span style="font-size:10px;color:var(--muted);font-weight:400">(Anlagekosten in der Einstellungsleiste anpassbar)</span></div>
+      <div id="roi-content"></div>
+    </div>
   </div>
 
   <!-- ⑥ Zukunft ────────────────────────────────────── -->
@@ -564,12 +717,12 @@
     </div>
 
     <div class="impact-grid">
-      <div class="icrd"><div class="icrd-icon">🌿</div><div class="icrd-val">3.572 kg</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
-      <div class="icrd"><div class="icrd-icon">🌳</div><div class="icrd-val">170</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
-      <div class="icrd"><div class="icrd-icon">🚗</div><div class="icrd-val">29.767 km</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
-      <div class="icrd"><div class="icrd-icon">✈️</div><div class="icrd-val">4,5×</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
-      <div class="icrd"><div class="icrd-icon">💡</div><div class="icrd-val">9,4 MWh</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
-      <div class="icrd"><div class="icrd-icon">⚡</div><div class="icrd-val">36,4 MWh</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
+      <div class="icrd"><div class="icrd-icon">🌿</div><div class="icrd-val" id="ic-co2-total">—</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
+      <div class="icrd"><div class="icrd-icon">🌳</div><div class="icrd-val" id="ic-trees">—</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
+      <div class="icrd"><div class="icrd-icon">🚗</div><div class="icrd-val" id="ic-km">—</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
+      <div class="icrd"><div class="icrd-icon">✈️</div><div class="icrd-val" id="ic-flights">—</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
+      <div class="icrd"><div class="icrd-icon">💡</div><div class="icrd-val" id="ic-self">—</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
+      <div class="icrd"><div class="icrd-icon">⚡</div><div class="icrd-val" id="ic-total">—</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
     </div>
 
     <div class="cgrid">
@@ -601,258 +754,574 @@
 </div><!-- /content -->
 
 <script>
-// ─── Rohdaten ──────────────────────────────────────────────────────────────
-const years     = [2022, 2023, 2024, 2025, 2026];
-const labels    = years.map(String);
-const solar     = [2.4,  10.0, 10.4, 10.4, 3.2];
-const home      = [1.3,   2.6,  2.6,  2.3, 1.2];
-const powerwall = [0.38,  1.0,  1.00, 1.1, 0.46];
-const fromGrid  = [0.48,  0.54, 0.42, 0.15, 0.17];
-const toGrid    = [1.5,   7.7,  8.0,  7.8,  2.0];
+// ═══════════════════════════════════════════════════════════════════════════
+// REACTIVE SETTINGS  (updated by price bar inputs)
+// ═══════════════════════════════════════════════════════════════════════════
+let buyPrice   = 30;    // ct/kWh
+let sellPrice  = 8;     // ct/kWh
+let systemCost = 15000; // €
+let currentRows = null; // last loaded rows — for re-derive on price change
 
-// ─── Abgeleitete Werte ────────────────────────────────────────────────────
-const selfConsumed = solar.map((s,i) => +(s - toGrid[i]).toFixed(2));
-const solarDirect  = home.map((h,i) => +(h - powerwall[i] - fromGrid[i]).toFixed(2));
-const autarky      = home.map((h,i) => +((h - fromGrid[i]) / h * 100).toFixed(1));
-const co2Saved     = selfConsumed.map(sc => +(sc * 1000 * 0.38).toFixed(0));
-const savings      = selfConsumed.map((sc,i) => +(sc*1000*0.30 + toGrid[i]*1000*0.08).toFixed(0));
-const feedRev      = toGrid.map(tg => +(tg*1000*0.08).toFixed(0));
-const costWithout  = home.map(h => +(h*1000*0.30).toFixed(0));
-const costWith     = fromGrid.map(fg => +(fg*1000*0.30).toFixed(0));
+// ═══════════════════════════════════════════════════════════════════════════
+// FIXED CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════
+const CO2_KG    = 0.380;  // kg CO₂ per kWh (DE Bundesnetz-Durchschnitt)
+const MONTH_LABELS  = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTH_FACTORS = [0.03,0.05,0.08,0.11,0.13,0.14,0.13,0.11,0.09,0.06,0.04,0.03];
 
-// ─── Monatliche Verteilung (Ø Vollbetriebsjahre 2023-2025) ───────────────
-const mLbls = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-const mFact = [0.03,0.05,0.08,0.11,0.13,0.14,0.13,0.11,0.09,0.06,0.04,0.03];
-const avgY  = (10.0+10.4+10.4)/3;
-const mKwh  = mFact.map(f => +(f*avgY*1000).toFixed(0));
+// ═══════════════════════════════════════════════════════════════════════════
+// DEFAULT DATA  (matches data.csv)
+// ═══════════════════════════════════════════════════════════════════════════
+const DEFAULT_ROWS = [
+  {year:2022,home:1.3,powerwall:0.38,solar:2.4,fromGrid:0.48,toGrid:1.5},
+  {year:2023,home:2.6,powerwall:1.0, solar:10.0,fromGrid:0.54,toGrid:7.7},
+  {year:2024,home:2.6,powerwall:1.0, solar:10.4,fromGrid:0.42,toGrid:8.0},
+  {year:2025,home:2.3,powerwall:1.1, solar:10.4,fromGrid:0.15,toGrid:7.8},
+  {year:2026,home:1.2,powerwall:0.46,solar:3.2, fromGrid:0.17,toGrid:2.0},
+];
 
-// ─── Prognosedaten 2022-2030 ──────────────────────────────────────────────
-const fYears  = [2022,2023,2024,2025,2026,2027,2028,2029,2030];
-const fSolar  = [2.4, 10.0,10.4,10.4,10.4,10.3,10.2,10.1,10.0];
-const fToGrid = [1.5,  7.7, 8.0, 7.8, 7.8, 7.7, 7.6, 7.5, 7.4];
-const fIsAct  = [true,true,true,true,false,false,false,false,false];
-const fAutark = [63.1,79.2,83.8,93.5,93.5,94,95,96,97];
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV PARSER
+// ═══════════════════════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) throw new Error('CSV hat zu wenige Zeilen');
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const hdrs = lines[0].split(sep).map(h => h.trim().toLowerCase());
+  const ci = kw => {
+    const i = hdrs.findIndex(h => h.includes(kw));
+    if (i < 0) throw new Error(`Spalte mit "${kw}" nicht gefunden`);
+    return i;
+  };
+  const iHome = ci('home');
+  const iPW   = ci('powerwall');
+  const iSol  = ci('solar');
+  const iFrom = ci('from grid');
+  const iTo   = ci('to grid');
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const l = lines[i].trim(); if (!l) continue;
+    const c = l.split(sep);
+    const dateStr = c[0] || '';
+    const yr = parseInt(dateStr);
+    if (isNaN(yr)) continue;
+    // extract month from ISO date string (e.g. 2023-06-01T...)
+    const mMatch = dateStr.match(/^\d{4}-(\d{2})/);
+    const month  = mMatch ? parseInt(mMatch[1]) : 1;
+    rows.push({
+      year: yr, _month: month,
+      home:     parseFloat(c[iHome]) || 0,
+      powerwall:parseFloat(c[iPW])   || 0,
+      solar:    parseFloat(c[iSol])  || 0,
+      fromGrid: parseFloat(c[iFrom]) || 0,
+      toGrid:   parseFloat(c[iTo])   || 0,
+    });
+  }
+  rows.sort((a,b) => a.year - b.year || a._month - b._month);
+  if (!rows.length) throw new Error('Keine gültigen Datenzeilen');
+  return rows;
+}
 
-// ─── Chart.js Defaults ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// DERIVE  – all computed arrays from raw rows
+// ═══════════════════════════════════════════════════════════════════════════
+function derive(rows) {
+  const BUY  = buyPrice  / 100;   // reactive €/kWh
+  const SELL = sellPrice / 100;
+
+  // ── Monthly vs. annual detection ─────────────────────────────────────────
+  const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a,b)=>a-b);
+  const isMonthly   = rows.length > uniqueYears.length;
+  let monthlyByYear = {};
+  let annualRows;
+
+  if (isMonthly) {
+    uniqueYears.forEach(yr => {
+      monthlyByYear[yr] = rows.filter(r => r.year === yr).sort((a,b) => a._month - b._month);
+    });
+    annualRows = uniqueYears.map(yr => {
+      const yr_r = monthlyByYear[yr];
+      const sum  = k => +(yr_r.reduce((s,r) => s + r[k], 0)).toFixed(3);
+      return { year:yr, home:+sum('home'), powerwall:+sum('powerwall'),
+               solar:+sum('solar'), fromGrid:+sum('fromGrid'), toGrid:+sum('toGrid') };
+    });
+  } else {
+    annualRows = rows;
+  }
+
+  const yrs   = annualRows.map(r => r.year);
+  const lbls  = yrs.map(String);
+  const solar = annualRows.map(r => r.solar);
+  const home  = annualRows.map(r => r.home);
+  const pw    = annualRows.map(r => r.powerwall);
+  const fgrid = annualRows.map(r => r.fromGrid);
+  const tgrid = annualRows.map(r => r.toGrid);
+
+  const selfCons  = solar.map((s,i) => Math.max(0, +(s - tgrid[i]).toFixed(2)));
+  const solDirect = home.map((h,i)  => Math.max(0, +(h - pw[i] - fgrid[i]).toFixed(2)));
+  const autarky   = home.map((h,i)  => +((h - fgrid[i]) / h * 100).toFixed(1));
+  const evq       = solar.map((s,i) => s > 0 ? +(selfCons[i] / s * 100).toFixed(1) : 0);
+  const co2       = selfCons.map(sc => +(sc * 1000 * CO2_KG).toFixed(0));
+  const savings   = selfCons.map((sc,i) => +(sc*1000*BUY + tgrid[i]*1000*SELL).toFixed(0));
+  const feedRev   = tgrid.map(tg  => +(tg*1000*SELL).toFixed(0));
+  const costWout  = home.map(h    => +(h*1000*BUY).toFixed(0));
+  const costWith  = fgrid.map(fg  => +(fg*1000*BUY).toFixed(0));
+  const cumCO2    = co2.reduce((acc,v) => [...acc, (acc[acc.length-1]||0)+v], []);
+
+  // Monthly simulation (used when no real monthly rows)
+  const fullY   = solar.filter(s => s > 5);
+  const avgFull = fullY.length ? fullY.reduce((a,b)=>a+b,0)/fullY.length : solar[solar.length-1];
+  const mKwh    = MONTH_FACTORS.map(f => +(f * avgFull * 1000).toFixed(0));
+
+  // Forecast
+  const bestIdx = solar.reduce((bi,s,i) => s > solar[bi] ? i : bi, 0);
+  const baseSol = solar[bestIdx], baseTG = tgrid[bestIdx];
+  const lastYr  = yrs[yrs.length-1], lastAut = autarky[autarky.length-1];
+  const fYears = [...yrs], fSolar = [...solar], fToGrid = [...tgrid];
+  const fAutark = [...autarky], fIsAct = yrs.map(() => true);
+  for (let i = 1; i <= 5; i++) {
+    const deg = Math.max(0.95, 1 - 0.005*i);
+    fYears.push(lastYr + i);
+    fSolar.push(+(baseSol * deg).toFixed(1));
+    fToGrid.push(+(baseTG * deg).toFixed(1));
+    fAutark.push(+(Math.min(98, lastAut + i*0.5)).toFixed(1));
+    fIsAct.push(false);
+  }
+
+  // ROI
+  const fullSav      = savings.filter((_,i) => solar[i] > 5);
+  const avgAnnualSav = Math.round(fullSav.length
+    ? fullSav.reduce((a,b)=>a+b,0)/fullSav.length
+    : savings.reduce((a,b)=>a+b,0)/savings.length);
+  const totalSav   = savings.reduce((a,b)=>a+b,0);
+  const roiProgress = Math.min(100, totalSav / systemCost * 100);
+  const paybackYears = avgAnnualSav > 0 ? systemCost / avgAnnualSav : 999;
+
+  // Netz-Unabhängigkeits-Score
+  const li          = autarky.length - 1;
+  const autScr      = autarky[li] / 100;
+  const gridFreeScr = 1 - fgrid[li] / (home[li] || 1);
+  const batScr      = pw[li] / (pw[li] + fgrid[li] + 0.001);
+  const firstAut    = autarky[0] / 100;
+  const progScr     = li > 0
+    ? Math.min(1, (autarky[li]/100 - firstAut) / Math.max(0.01, 1 - firstAut))
+    : 0.5;
+  const indepScore  = Math.round(Math.min(100, autScr*35 + gridFreeScr*30 + batScr*20 + progScr*15));
+  const scoreComponents = [
+    {lbl:'Autarkiegrad',       pct:Math.round(autScr*100),      col:'#10b981', weight:35},
+    {lbl:'Netzfreiheit',       pct:Math.round(gridFreeScr*100), col:'#06b6d4', weight:30},
+    {lbl:'Batterie-Resilienz', pct:Math.round(batScr*100),      col:'#8b5cf6', weight:20},
+    {lbl:'Entwicklungs-Bonus', pct:Math.round(progScr*100),     col:'#f59e0b', weight:15},
+  ];
+
+  return {
+    yrs, lbls, solar, home, pw, fgrid, tgrid,
+    selfCons, solDirect, autarky, evq, co2, savings, feedRev, costWout, costWith,
+    mKwh, cumCO2, isMonthly, monthlyByYear,
+    fYears, fSolar, fToGrid, fAutark, fIsAct,
+    totalSolar:    +solar.reduce((a,b)=>a+b,0).toFixed(1),
+    totalSelfCons: +selfCons.reduce((a,b)=>a+b,0).toFixed(1),
+    totalSav, avgAnnualSav, paybackYears, roiProgress,
+    totalCO2:  co2.reduce((a,b)=>a+b,0),
+    bestSolar: Math.max(...solar),
+    bestAutarky: Math.max(...autarky),
+    lastYear:  lastYr,
+    indepScore, scoreComponents,
+    lastEvq:   evq[li],
+    lastAut:   autarky[li],
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART.JS DEFAULTS
+// ═══════════════════════════════════════════════════════════════════════════
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = '#334155';
 Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
 Chart.defaults.font.size = 12;
-const gridCfg = {color:'rgba(51,65,85,.5)',drawBorder:false};
-const tooltipCfg = {mode:'index',intersect:false};
-const legendCfg = {position:'top',labels:{boxWidth:11,padding:14}};
+const gCfg = {color:'rgba(51,65,85,.5)',drawBorder:false};
+const ttip = {mode:'index',intersect:false};
+const leg  = {position:'top',labels:{boxWidth:11,padding:14}};
+// graduated alpha per bar (single-series)
+const grad = (r,g,b,n) => Array.from({length:n},(_,i)=>`rgba(${r},${g},${b},${.2+.7*(i/(n-1||1))})`);
 
-function mkBar(el, lbl, data, bgCol, bdCol, opts={}) {
-  return new Chart(el, {
-    type:'bar',
-    data:{labels, datasets:[{label:lbl,data,backgroundColor:bgCol,borderColor:bdCol,borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:tooltipCfg,...(opts.plugins||{})},
-      scales:{x:{grid:gridCfg},y:{grid:gridCfg,...(opts.y||{})}}}
-  });
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART REGISTRY
+// ═══════════════════════════════════════════════════════════════════════════
+let CH = {};
+function nukeCharts() {
+  Object.values(CH).forEach(c => { try { c.destroy(); } catch(e){} });
+  CH = {};
 }
 
-// ══════════════════════════════════════════════════════
-// Tab 1 – Stromerzeugung
-// ══════════════════════════════════════════════════════
-mkBar('c-solar-annual','Solarenergie (MWh)',solar,
-  ['rgba(245,158,11,.25)','rgba(245,158,11,.55)','rgba(245,158,11,.8)','rgba(245,158,11,.9)','rgba(245,158,11,.4)'],
-  '#f59e0b');
+// ═══════════════════════════════════════════════════════════════════════════
+// BUILD ALL CHARTS
+// ═══════════════════════════════════════════════════════════════════════════
+function buildCharts(d) {
+  nukeCharts();
+  const {lbls,solar,selfCons,solDirect,pw,fgrid,tgrid,autarky,
+         co2,feedRev,costWout,costWith,mKwh,cumCO2,
+         fYears,fSolar,fToGrid,fIsAct} = d;
+  const n = lbls.length;
 
-new Chart(document.getElementById('c-solar-monthly'),{
-  type:'bar',
-  data:{labels:mLbls,datasets:[{label:'kWh',data:mKwh,
-    backgroundColor:mFact.map(f=>`rgba(245,158,11,${.15+f*4.5})`),
-    borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' kWh'}}},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}
-});
+  // ── Tab 1: Stromerzeugung
+  CH.s1 = new Chart(document.getElementById('c-solar-annual'),{type:'bar',
+    data:{labels:lbls,datasets:[{label:'Solar (MWh)',data:solar,
+      backgroundColor:grad(245,158,11,n),borderColor:'#f59e0b',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:ttip},scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
 
-new Chart(document.getElementById('c-solar-balance'),{
-  type:'bar',
-  data:{labels,datasets:[
-    {label:'Eigenverbrauch (MWh)',data:selfConsumed,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
-    {label:'Einspeisung (MWh)',data:toGrid,backgroundColor:'rgba(6,182,212,.7)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
-});
+  // Monthly chart: real data if available, simulated otherwise
+  buildMonthlyChart(d, d.yrs[d.yrs.length-1]);
 
-// ══════════════════════════════════════════════════════
-// Tab 2 – Verbrauch
-// ══════════════════════════════════════════════════════
-new Chart(document.getElementById('c-cons-stacked'),{
-  type:'bar',
-  data:{labels,datasets:[
-    {label:'Solar direkt (MWh)',data:solarDirect,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-    {label:'Powerwall (MWh)',data:powerwall,backgroundColor:'rgba(139,92,246,.75)',borderColor:'#8b5cf6',borderWidth:1,borderRadius:4},
-    {label:'Netz (MWh)',data:fromGrid,backgroundColor:'rgba(239,68,68,.75)',borderColor:'#ef4444',borderWidth:1,borderRadius:4}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
-});
+  CH.s3 = new Chart(document.getElementById('c-solar-balance'),{type:'bar',
+    data:{labels:lbls,datasets:[
+      {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
+      {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.7)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
 
-new Chart(document.getElementById('c-autarky'),{
-  type:'line',
-  data:{labels,datasets:[{label:'Autarkie (%)',data:autarky,
-    borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',
-    fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' %'}}},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}
-});
+  // ── Tab 2: Verbrauch
+  CH.v1 = new Chart(document.getElementById('c-cons-stacked'),{type:'bar',
+    data:{labels:lbls,datasets:[
+      {label:'Solar direkt (MWh)',data:solDirect,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+      {label:'Powerwall (MWh)',data:pw,backgroundColor:'rgba(139,92,246,.75)',borderColor:'#8b5cf6',borderWidth:1,borderRadius:4},
+      {label:'Netz (MWh)',data:fgrid,backgroundColor:'rgba(239,68,68,.75)',borderColor:'#ef4444',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
 
-// Progress bars – Autarkie
-const autarkyColors=['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316'];
-document.getElementById('prog-autarky').innerHTML = years.map((y,i)=>`
-  <div class="prog-item">
-    <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${autarky[i]} %</span></div>
-    <div class="prog-track"><div class="prog-fill" style="width:${autarky[i]}%;background:${autarkyColors[i]}"></div></div>
-  </div>`).join('');
+  CH.v2 = new Chart(document.getElementById('c-autarky'),{type:'line',
+    data:{labels:lbls,datasets:[{label:'Autarkie (%)',data:autarky,
+      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',fill:true,tension:.4,
+      borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
 
-// ══════════════════════════════════════════════════════
-// Tab 3 – Einspeisung
-// ══════════════════════════════════════════════════════
-mkBar('c-feedin-annual','Einspeisung (MWh)',toGrid,
-  ['rgba(6,182,212,.25)','rgba(6,182,212,.55)','rgba(6,182,212,.8)','rgba(6,182,212,.9)','rgba(6,182,212,.4)'],
-  '#06b6d4');
+  // ── Tab 3: Einspeisung
+  CH.e1 = new Chart(document.getElementById('c-feedin-annual'),{type:'bar',
+    data:{labels:lbls,datasets:[{label:'Einspeisung (MWh)',data:tgrid,
+      backgroundColor:grad(6,182,212,n),borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
 
-new Chart(document.getElementById('c-feedin-vs-solar'),{
-  type:'bar',
-  data:{labels,datasets:[
-    {label:'Eigenverbrauch (MWh)',data:selfConsumed,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-    {label:'Einspeisung (MWh)',data:toGrid,backgroundColor:'rgba(6,182,212,.75)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg}}}
-});
+  CH.e2 = new Chart(document.getElementById('c-feedin-vs-solar'),{type:'bar',
+    data:{labels:lbls,datasets:[
+      {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+      {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.75)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
 
-mkBar('c-feedin-revenue','Vergütung (€)',feedRev,
-  'rgba(16,185,129,.7)','#10b981',
-  {y:{ticks:{callback:v=>v+' €'}}});
+  CH.e3 = new Chart(document.getElementById('c-feedin-revenue'),{type:'bar',
+    data:{labels:lbls,datasets:[{label:'Vergütung (€)',data:feedRev,
+      backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
 
-// ══════════════════════════════════════════════════════
-// Tab 4 – Batterie
-// ══════════════════════════════════════════════════════
-mkBar('c-bat-annual','Powerwall (MWh)',powerwall,
-  ['rgba(139,92,246,.25)','rgba(139,92,246,.5)','rgba(139,92,246,.7)','rgba(139,92,246,.9)','rgba(139,92,246,.5)'],
-  '#8b5cf6');
+  // ── Tab 4: Batterie
+  CH.b1 = new Chart(document.getElementById('c-bat-annual'),{type:'bar',
+    data:{labels:lbls,datasets:[{label:'Powerwall (MWh)',data:pw,
+      backgroundColor:grad(139,92,246,n),borderColor:'#8b5cf6',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
 
-new Chart(document.getElementById('c-bat-vs-grid'),{
-  type:'line',
-  data:{labels,datasets:[
-    {label:'Powerwall (MWh)',data:powerwall,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#8b5cf6'},
-    {label:'Netzbezug (MWh)',data:fromGrid,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg}}}
-});
+  CH.b2 = new Chart(document.getElementById('c-bat-vs-grid'),{type:'line',
+    data:{labels:lbls,datasets:[
+      {label:'Powerwall (MWh)',data:pw,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#8b5cf6'},
+      {label:'Netzbezug (MWh)',data:fgrid,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
 
-document.getElementById('prog-battery').innerHTML = years.map((y,i)=>{
-  const pct = +(powerwall[i]/home[i]*100).toFixed(1);
-  return `<div class="prog-item">
-    <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${pct} % Powerwall-Anteil</span></div>
-    <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:#8b5cf6"></div></div>
-  </div>`;
-}).join('');
+  // ── Tab 5: Vorteile
+  CH.p1 = new Chart(document.getElementById('c-savings'),{type:'bar',
+    data:{labels:lbls,datasets:[
+      {label:'Eigenverbrauch-Ersparnis (€)',data:selfCons.map(sc=>+(sc*1000*(buyPrice/100)).toFixed(0)),backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+      {label:'Einspeisevergütung (€)',data:feedRev,backgroundColor:'rgba(16,185,129,.75)',borderColor:'#10b981',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
 
-// ══════════════════════════════════════════════════════
-// Tab 5 – Vorteile
-// ══════════════════════════════════════════════════════
-new Chart(document.getElementById('c-savings'),{
-  type:'bar',
-  data:{labels,datasets:[
-    {label:'Eigenverbrauch-Ersparnis (€)',data:selfConsumed.map(sc=>+(sc*1000*0.30).toFixed(0)),backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-    {label:'Einspeisevergütung (€)',data:feedRev,backgroundColor:'rgba(16,185,129,.75)',borderColor:'#10b981',borderWidth:1,borderRadius:4}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{stacked:true,grid:gridCfg},y:{stacked:true,grid:gridCfg,ticks:{callback:v=>v+' €'}}}}
-});
+  CH.p2 = new Chart(document.getElementById('c-cost-cmp'),{type:'line',
+    data:{labels:lbls,datasets:[
+      {label:'Ohne Solar (€)',data:costWout,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'},
+      {label:'Mit Solar (€)',data:costWith,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
 
-new Chart(document.getElementById('c-cost-cmp'),{
-  type:'line',
-  data:{labels,datasets:[
-    {label:'Ohne Solar (€)',data:costWithout,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'},
-    {label:'Mit Solar (€)',data:costWith,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}
-  ]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+c.raw+' €'}}},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg,ticks:{callback:v=>v+' €'}}}}
-});
-
-// ══════════════════════════════════════════════════════
-// Tab 6 – Zukunft
-// ══════════════════════════════════════════════════════
-new Chart(document.getElementById('c-forecast'),{
-  type:'bar',
-  data:{
-    labels:fYears.map(String),
-    datasets:[
+  // ── Tab 6: Zukunft
+  CH.z1 = new Chart(document.getElementById('c-forecast'),{type:'bar',
+    data:{labels:fYears.map(String),datasets:[
       {label:'Ist-Wert (MWh)',data:fSolar.map((v,i)=>fIsAct[i]?v:null),backgroundColor:'rgba(245,158,11,.8)',borderColor:'#f59e0b',borderWidth:2,borderRadius:5},
-      {label:'Prognose (MWh)',data:fSolar.map((v,i)=>!fIsAct[i]?v:null),backgroundColor:'rgba(6,182,212,.5)',borderColor:'#06b6d4',borderWidth:2,borderRadius:5}
-    ]
-  },
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:legendCfg,tooltip:tooltipCfg},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg,min:0,title:{display:true,text:'MWh',color:'#94a3b8'}}}}
+      {label:'Prognose (MWh)',data:fSolar.map((v,i)=>!fIsAct[i]?v:null),backgroundColor:'rgba(6,182,212,.5)',borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,title:{display:true,text:'MWh',color:'#94a3b8'}}}}});
+
+  // ── Tab 7: Klimawirkung
+  CH.k1 = new Chart(document.getElementById('c-co2-annual'),{type:'bar',
+    data:{labels:lbls,datasets:[{label:'CO₂ eingespart (kg)',data:co2,
+      backgroundColor:grad(16,185,129,n),borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
+
+  CH.k2 = new Chart(document.getElementById('c-co2-cum'),{type:'line',
+    data:{labels:lbls,datasets:[{label:'Kumuliert (kg)',data:cumCO2,
+      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.15)',fill:true,tension:.4,
+      borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' kg'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MONTHLY CHART BUILDER  (real or simulated)
+// ═══════════════════════════════════════════════════════════════════════════
+function buildMonthlyChart(d, yr) {
+  if (CH.s2) try { CH.s2.destroy(); } catch(e){}
+  const selWrap = document.getElementById('month-sel-wrap');
+  const sub     = document.getElementById('monthly-chart-sub');
+
+  if (d.isMonthly) {
+    // Populate year selector
+    const sel = document.getElementById('month-year-sel');
+    sel.innerHTML = d.yrs.map(y => `<option value="${y}"${y===yr?' selected':''}>${y}</option>`).join('');
+    selWrap.style.display = 'flex';
+    sub.textContent = 'Echte Monatsdaten';
+
+    const mrows  = d.monthlyByYear[yr] || [];
+    const mSolar = Array(12).fill(0), mHome = Array(12).fill(0);
+    mrows.forEach(r => {
+      const m = r._month - 1;
+      if (m >= 0 && m < 12) { mSolar[m] = +(r.solar*1000).toFixed(0); mHome[m] = +(r.home*1000).toFixed(0); }
+    });
+    CH.s2 = new Chart(document.getElementById('c-solar-monthly'),{
+      type:'bar',
+      data:{labels:MONTH_LABELS,datasets:[
+        {label:`Solar ${yr} (kWh)`,data:mSolar,backgroundColor:MONTH_FACTORS.map(f=>`rgba(245,158,11,${.15+f*4.5})`),borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
+        {label:`Verbrauch ${yr} (kWh)`,data:mHome,type:'line',borderColor:'#06b6d4',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#06b6d4',tension:.3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:leg,tooltip:ttip},
+        scales:{x:{grid:gCfg},y:{grid:gCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}
+    });
+    // wire year selector
+    sel.onchange = () => buildMonthlyChart(window._lastDerived, parseInt(sel.value));
+  } else {
+    selWrap.style.display = 'none';
+    const fullYrs = d.yrs.filter((_,i) => d.solar[i] > 5);
+    sub.textContent = fullYrs.length ? `kWh Ø ${fullYrs[0]}–${fullYrs[fullYrs.length-1]} (simuliert)` : 'kWh simuliert';
+    CH.s2 = new Chart(document.getElementById('c-solar-monthly'),{type:'bar',
+      data:{labels:MONTH_LABELS,datasets:[{label:'kWh',data:d.mKwh,
+        backgroundColor:MONTH_FACTORS.map(f=>`rgba(245,158,11,${.15+f*4.5})`),
+        borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{grid:gCfg},y:{grid:gCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UPDATE UI
+// ═══════════════════════════════════════════════════════════════════════════
+const de = (n,dec=1) => (+n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+const PCOLS = ['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316','#3b82f6','#ec4899'];
+
+function updateKPIs(d) {
+  document.getElementById('kpi-solar').textContent    = de(d.totalSolar) + ' MWh';
+  document.getElementById('kpi-best').textContent     = de(d.bestSolar)  + ' MWh';
+  document.getElementById('kpi-savings').textContent  = de(d.totalSav,0) + ' €';
+  document.getElementById('kpi-autarky').textContent  = de(d.bestAutarky) + ' %';
+  document.getElementById('kpi-co2').textContent      = de(d.totalCO2,0) + ' kg';
+  document.getElementById('hdr-badge').textContent    = `Datenbasis: ${d.yrs[0]} – ${d.lastYear}`;
+}
+
+function updateProgressBars(d) {
+  document.getElementById('prog-autarky').innerHTML = d.yrs.map((y,i)=>`
+    <div class="prog-item">
+      <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${d.autarky[i]} %</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,d.autarky[i])}%;background:${PCOLS[i%PCOLS.length]}"></div></div>
+    </div>`).join('');
+
+  document.getElementById('prog-battery').innerHTML = d.yrs.map((y,i)=>{
+    const pct = +(d.pw[i]/d.home[i]*100).toFixed(1);
+    return `<div class="prog-item">
+      <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${pct} % Powerwall-Anteil</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,pct)}%;background:#8b5cf6"></div></div>
+    </div>`;}).join('');
+
+  const targets = [
+    {lbl:`CO₂-Spitzenjahr ${d.lastYear} (Ziel: 1.000 kg)`, v:d.co2[d.co2.length-1], max:1000, col:'#10b981'},
+    {lbl:'Autarkie-Rekord (Ziel: 95 %)',                    v:d.bestAutarky,          max:95,   col:'#06b6d4'},
+    {lbl:'Kumulierte Ersparnis (Ziel: 5.000 €)',            v:d.totalSav,             max:5000, col:'#f59e0b'},
+    {lbl:'CO₂ gesamt (Ziel: 4.000 kg)',                     v:d.totalCO2,             max:4000, col:'#8b5cf6'},
+  ];
+  document.getElementById('prog-climate').innerHTML = targets.map(g=>{
+    const pct = Math.min(100, g.v/g.max*100).toFixed(1);
+    return `<div class="prog-item">
+      <div class="prog-hdr"><span class="prog-lbl">${g.lbl}</span><span class="prog-val">${pct} %</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.col}"></div></div>
+    </div>`;}).join('');
+}
+
+function updateTable(d) {
+  document.getElementById('ftbl-body').innerHTML = d.fYears.map((y,i)=>{
+    const sc  = Math.max(0, +(d.fSolar[i]-d.fToGrid[i]).toFixed(1));
+    const sav = +(sc*1000*(buyPrice/100) + d.fToGrid[i]*1000*(sellPrice/100)).toFixed(0);
+    const co2 = +(sc*1000*CO2_KG).toFixed(0);
+    const badge = d.fIsAct[i]
+      ? '<span class="bgt bgt-ist">Ist</span>'
+      : '<span class="bgt bgt-pro">Prognose</span>';
+    return `<tr><td><strong>${y}</strong></td><td>${badge}</td>
+      <td>${d.fSolar[i].toFixed(1)} MWh</td><td>${sc.toFixed(1)} MWh</td>
+      <td>${d.fAutark[i]} %</td><td>${sav.toLocaleString('de-DE')} €</td>
+      <td>${co2.toLocaleString('de-DE')} kg</td></tr>`;}).join('');
+}
+
+function updateImpact(d) {
+  const trees   = Math.round(d.totalCO2 / 21);
+  const km      = Math.round(d.totalCO2 * 1000 / 120);
+  const flights = (d.totalCO2 / 800).toFixed(1).replace('.',',');
+  document.getElementById('ic-co2-total').textContent = de(d.totalCO2,0) + ' kg';
+  document.getElementById('ic-trees').textContent     = de(trees,0);
+  document.getElementById('ic-km').textContent        = de(km,0) + ' km';
+  document.getElementById('ic-flights').textContent   = flights + '×';
+  document.getElementById('ic-self').textContent      = de(d.totalSelfCons) + ' MWh';
+  document.getElementById('ic-total').textContent     = de(d.totalSolar) + ' MWh';
+}
+
+function updateEVQ(d) {
+  document.getElementById('evq-last').textContent    = de(d.lastEvq) + ' %';
+  document.getElementById('evq-autarky').textContent = de(d.lastAut) + ' %';
+  // EVQ chart
+  if (CH.evq) try { CH.evq.destroy(); } catch(e){}
+  CH.evq = new Chart(document.getElementById('c-evq'),{type:'bar',
+    data:{labels:d.lbls,datasets:[
+      {label:'Autarkie — Verbrauchsperspektive (%)',data:d.autarky,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
+      {label:'Eigenverbrauchsquote — Erzeugerperspektive (%)',data:d.evq,backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+}
+
+function updateScore(d) {
+  const s    = d.indepScore;
+  const circ = 2 * Math.PI * 42; // r=42 → 263.9
+  const arc  = document.getElementById('score-arc');
+  arc.style.strokeDashoffset = circ * (1 - s/100);
+  const col = s >= 85 ? '#10b981' : s >= 70 ? '#f59e0b' : s >= 55 ? '#f97316' : '#ef4444';
+  arc.style.stroke = col;
+  const numEl = document.getElementById('score-num');
+  numEl.textContent = s;
+  numEl.style.color = col;
+  const rating = s >= 90 ? '🏆 Herausragend' : s >= 80 ? '⭐ Ausgezeichnet' : s >= 70 ? '✅ Sehr gut' : s >= 55 ? '👍 Gut' : '⚠ Ausbaufähig';
+  document.getElementById('score-rating').textContent = rating;
+  document.getElementById('score-rating').style.color = col;
+  document.getElementById('score-breakdown').innerHTML = d.scoreComponents.map(c =>
+    `<div class="score-comp">
+      <span class="score-comp-lbl">${c.lbl}</span>
+      <div class="score-comp-bar"><div class="score-comp-fill" style="width:${c.pct}%;background:${c.col}"></div></div>
+      <span class="score-comp-val" style="color:${c.col}">${c.pct}%</span>
+    </div>`).join('');
+}
+
+function updateROI(d) {
+  const yr  = d.paybackYears < 999 ? d.paybackYears.toFixed(1) : '>50';
+  const pct = d.roiProgress.toFixed(1);
+  const remaining = d.paybackYears < 999
+    ? Math.max(0, d.paybackYears - d.yrs.length + 1).toFixed(1) + ' Jahre'
+    : 'nicht berechenbar';
+  document.getElementById('roi-content').innerHTML = `
+    <div class="roi-row"><span class="roi-lbl">Systemkosten (einstellbar oben)</span><span class="roi-val">${systemCost.toLocaleString('de-DE')} €</span></div>
+    <div class="roi-row"><span class="roi-lbl">Ø Ersparnis Vollbetriebsjahre</span><span class="roi-val">${d.avgAnnualSav.toLocaleString('de-DE')} €/Jahr</span></div>
+    <div class="roi-row"><span class="roi-lbl">Amortisationszeit</span><span class="roi-val" style="color:var(--amber)">${yr} Jahre</span></div>
+    <div class="roi-row"><span class="roi-lbl">Verbleibend bis Amortisation</span><span class="roi-val">${remaining}</span></div>
+    <div class="roi-row"><span class="roi-lbl">Bereits amortisiert</span><span class="roi-val" style="color:var(--green)">${pct} %</span></div>
+    <div style="margin-top:10px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">Amortisationsfortschritt</div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,d.roiProgress)}%;background:var(--amber);transition:width .8s"></div></div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FULL REFRESH
+// ═══════════════════════════════════════════════════════════════════════════
+function refreshAll(rows) {
+  currentRows = rows;
+  window._lastDerived = null;
+  const d = derive(rows);
+  window._lastDerived = d;
+  updateKPIs(d);
+  buildCharts(d);
+  updateProgressBars(d);
+  updateTable(d);
+  updateImpact(d);
+  updateEVQ(d);
+  updateScore(d);
+  updateROI(d);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRICE BAR — live recalculation on input change
+// ═══════════════════════════════════════════════════════════════════════════
+function onPriceChange() {
+  if (currentRows) refreshAll(currentRows);
+}
+document.getElementById('inp-buy').addEventListener('input', e => {
+  buyPrice = parseFloat(e.target.value) || 30; onPriceChange();
+});
+document.getElementById('inp-sell').addEventListener('input', e => {
+  sellPrice = parseFloat(e.target.value) || 8; onPriceChange();
+});
+document.getElementById('inp-cost').addEventListener('input', e => {
+  systemCost = parseFloat(e.target.value) || 15000; onPriceChange();
 });
 
-const tb = document.getElementById('ftbl-body');
-fYears.forEach((y,i)=>{
-  const sc  = +(fSolar[i]-fToGrid[i]).toFixed(1);
-  const sav = +(sc*1000*0.30+fToGrid[i]*1000*0.08).toFixed(0);
-  const co2 = +(sc*1000*0.38).toFixed(0);
-  const badge = fIsAct[i]
-    ? '<span class="bgt bgt-ist">Ist</span>'
-    : '<span class="bgt bgt-pro">Prognose</span>';
-  tb.innerHTML += `<tr>
-    <td><strong>${y}</strong></td>
-    <td>${badge}</td>
-    <td>${fSolar[i].toFixed(1)} MWh</td>
-    <td>${sc.toFixed(1)} MWh</td>
-    <td>${fAutark[i]} %</td>
-    <td>${sav.toLocaleString('de-DE')} €</td>
-    <td>${co2.toLocaleString('de-DE')} kg</td>
-  </tr>`;
+// ═══════════════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', isErr);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE UPLOAD  (button click + drag-and-drop)
+// ═══════════════════════════════════════════════════════════════════════════
+function loadFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+    showToast('⚠ Bitte eine .csv-Datei wählen', true); return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const rows = parseCSV(ev.target.result);
+      refreshAll(rows);
+      showToast(`✓ ${rows.length} Jahre geladen (${rows[0].year}–${rows[rows.length-1].year})`);
+    } catch(err) { showToast('⚠ ' + err.message, true); }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('csv-file').addEventListener('change', e => {
+  loadFile(e.target.files[0]);
+  e.target.value = '';
 });
 
-// ══════════════════════════════════════════════════════
-// Tab 7 – Klimawirkung
-// ══════════════════════════════════════════════════════
-mkBar('c-co2-annual','CO₂ eingespart (kg)',co2Saved,
-  ['rgba(16,185,129,.25)','rgba(16,185,129,.5)','rgba(16,185,129,.7)','rgba(16,185,129,.9)','rgba(16,185,129,.5)'],
-  '#10b981');
-
-const cumCO2 = co2Saved.reduce((a,v)=>[...a,(a[a.length-1]||0)+v],[]);
-new Chart(document.getElementById('c-co2-cum'),{
-  type:'line',
-  data:{labels,datasets:[{label:'Kumuliert (kg)',data:cumCO2,
-    borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.15)',
-    fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false}},
-    scales:{x:{grid:gridCfg},y:{grid:gridCfg,ticks:{callback:v=>v+' kg'}}}}
+// Drag-and-drop onto the whole page
+document.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
+document.addEventListener('dragleave', e => { if (e.relatedTarget===null) document.body.classList.remove('drag-over'); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.body.classList.remove('drag-over');
+  loadFile(e.dataTransfer.files[0]);
 });
 
-const climGoals=[
-  {lbl:'CO₂-Einsparung 2025 (Ziel: 1.000 kg)',v:988,max:1000,col:'#10b981'},
-  {lbl:'Autarkie 2025 (Ziel: 95 %)',v:93.5,max:95,col:'#06b6d4'},
-  {lbl:'Kumulierte Ersparnis (Ziel: 5.000 €)',v:4980,max:5000,col:'#f59e0b'},
-  {lbl:'CO₂-Gesamtziel 2022–2026 (Ziel: 4.000 kg)',v:3572,max:4000,col:'#8b5cf6'},
-];
-document.getElementById('prog-climate').innerHTML = climGoals.map(g=>{
-  const pct = Math.min(100,(g.v/g.max*100)).toFixed(1);
-  return `<div class="prog-item">
-    <div class="prog-hdr"><span class="prog-lbl">${g.lbl}</span><span class="prog-val">${pct} %</span></div>
-    <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.col}"></div></div>
-  </div>`;
-}).join('');
+// ═══════════════════════════════════════════════════════════════════════════
+// INITIAL LOAD + TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════
+currentRows = DEFAULT_ROWS;
+refreshAll(DEFAULT_ROWS);
 
 // ─── Tab Switching ────────────────────────────────────────────────────────
 function showTab(id, btn) {
