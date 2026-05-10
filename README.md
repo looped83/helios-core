@@ -1,5 +1,4 @@
 # Helios Core
-
 Interaktives Photovoltaik-Dashboard zur Analyse und Visualisierung von Solaranlagen-Daten im Browser — kein Build-Tool erforderlich.
 
 ## Features
