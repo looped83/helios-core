@@ -28,10 +28,3 @@ Date time,Home (MWh),Vehicle (kWh),From Powerwall (MWh),Solar Energy (MWh),From 
 
 - Vanilla HTML/CSS/JavaScript (Single-File `index.html`)
 - [Chart.js 4.4.0](https://www.chartjs.org/) via CDN
-
-## Starten
-
-```bash
-# Einfach im Browser öffnen:
-open index.html
-```
