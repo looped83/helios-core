@@ -215,6 +215,17 @@
     .delta-dn{color:var(--red);font-size:10px}
     .delta-eq{color:var(--muted);font-size:10px}
 
+    /* ── Skip Navigation ── */
+    .skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+    .skip-nav:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;
+      background:var(--amber);color:#000;padding:8px 18px;border-radius:6px;z-index:99999;
+      font-weight:700;font-size:14px;text-decoration:none}
+
+    /* ── Focus Visible ── */
+    :focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:3px}
+    .tab-btn:focus-visible{outline-offset:-2px}
+    .pi-wrap input[type=number]:focus-visible{outline:2px solid var(--amber);outline-offset:0}
+
     /* ── Responsive ── */
     @media(max-width:768px){
       .kpi-bar{grid-template-columns:repeat(3,1fr)}
@@ -228,21 +239,22 @@
   </style>
 </head>
 <body>
+<a class="skip-nav" href="#main-content">Zum Hauptinhalt springen</a>
 
 <!-- ── Header ────────────────────────────────────────── -->
-<div class="hdr">
-  <div class="hdr-icon">☀️</div>
+<header class="hdr">
+  <div class="hdr-icon" aria-hidden="true">☀️</div>
   <div class="hdr-title">
     <h1>Helios Core</h1>
     <p>Photovoltaik · Tesla Powerwall · Netzeinspeisung · Analyse 2022 – 2026</p>
   </div>
-  <div class="hdr-badge" id="hdr-badge">Datenbasis: 2022 – 2026</div>
+  <div class="hdr-badge" id="hdr-badge" aria-live="polite">Datenbasis: 2022 – 2026</div>
   <label class="upload-btn" title="Neue CSV laden — auch per Drag &amp; Drop auf die Seite">
-    📂 CSV laden
-    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none">
+    <span aria-hidden="true">📂</span> CSV laden
+    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" aria-label="CSV-Datei auswählen">
   </label>
-</div>
-<div id="toast" class="toast"></div>
+</header>
+<div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 <!-- ── Global KPI Bar ────────────────────────────────── -->
 <div class="kpi-bar">
@@ -256,48 +268,48 @@
 <!-- ── Price Settings Bar ────────────────────────────── -->
 <div class="price-bar">
   <div class="pi">
-    <label>⚡ Strompreis</label>
+    <label for="inp-buy"><span aria-hidden="true">⚡</span> Strompreis</label>
     <div class="pi-wrap">
-      <input type="number" id="inp-buy" value="30" min="1" max="150" step="0.5">
-      <span>ct/kWh</span>
+      <input type="number" id="inp-buy" value="30" min="1" max="150" step="0.5" aria-label="Strompreis in Cent pro kWh">
+      <span aria-hidden="true">ct/kWh</span>
     </div>
   </div>
-  <div class="pi-sep"></div>
+  <div class="pi-sep" aria-hidden="true"></div>
   <div class="pi">
-    <label>🔌 Einspeisevergütung</label>
+    <label for="inp-sell"><span aria-hidden="true">🔌</span> Einspeisevergütung</label>
     <div class="pi-wrap">
-      <input type="number" id="inp-sell" value="8" min="1" max="50" step="0.5">
-      <span>ct/kWh</span>
+      <input type="number" id="inp-sell" value="8" min="1" max="50" step="0.5" aria-label="Einspeisevergütung in Cent pro kWh">
+      <span aria-hidden="true">ct/kWh</span>
     </div>
   </div>
-  <div class="pi-sep"></div>
+  <div class="pi-sep" aria-hidden="true"></div>
   <div class="pi">
-    <label>🏗 Anlagekosten (ROI)</label>
+    <label for="inp-cost"><span aria-hidden="true">🏗</span> Anlagekosten (ROI)</label>
     <div class="pi-wrap">
-      <input type="number" id="inp-cost" value="15000" min="1000" max="200000" step="500">
-      <span>€</span>
+      <input type="number" id="inp-cost" value="15000" min="1000" max="200000" step="500" aria-label="Anlagekosten in Euro für ROI-Berechnung">
+      <span aria-hidden="true">€</span>
     </div>
   </div>
   <span class="price-hint">Werte anpassen → alle Berechnungen aktualisieren live</span>
 </div>
 
 <!-- ── Tab Navigation ────────────────────────────────── -->
-<div class="tabs">
-  <button class="tab-btn active" onclick="showTab('erzeugung',this)">⚡ Stromerzeugung</button>
-  <button class="tab-btn" onclick="showTab('verbrauch',this)">🏠 Verbrauch</button>
-  <button class="tab-btn" onclick="showTab('einspeisung',this)">🔌 Einspeisung</button>
-  <button class="tab-btn" onclick="showTab('batterie',this)">🔋 Batterie</button>
-  <button class="tab-btn" onclick="showTab('vorteile',this)">💰 Vorteile</button>
-  <button class="tab-btn" onclick="showTab('zukunft',this)">🔭 Zukunft</button>
-  <button class="tab-btn" onclick="showTab('klima',this)">🌱 Klimawirkung</button>
-  <button class="tab-btn" onclick="showTab('vergleich',this)">📊 Jahresvergleich</button>
-</div>
+<nav class="tabs" role="tablist" aria-label="Dashboard-Navigation">
+  <button class="tab-btn active" role="tab" id="tab-erzeugung" aria-selected="true"  aria-controls="pane-erzeugung" onclick="showTab('erzeugung',this)"><span aria-hidden="true">⚡</span> Stromerzeugung</button>
+  <button class="tab-btn" role="tab" id="tab-verbrauch"   aria-selected="false" aria-controls="pane-verbrauch"   onclick="showTab('verbrauch',this)"><span aria-hidden="true">🏠</span> Verbrauch</button>
+  <button class="tab-btn" role="tab" id="tab-einspeisung" aria-selected="false" aria-controls="pane-einspeisung" onclick="showTab('einspeisung',this)"><span aria-hidden="true">🔌</span> Einspeisung</button>
+  <button class="tab-btn" role="tab" id="tab-batterie"    aria-selected="false" aria-controls="pane-batterie"    onclick="showTab('batterie',this)"><span aria-hidden="true">🔋</span> Batterie</button>
+  <button class="tab-btn" role="tab" id="tab-vorteile"    aria-selected="false" aria-controls="pane-vorteile"    onclick="showTab('vorteile',this)"><span aria-hidden="true">💰</span> Vorteile</button>
+  <button class="tab-btn" role="tab" id="tab-zukunft"     aria-selected="false" aria-controls="pane-zukunft"     onclick="showTab('zukunft',this)"><span aria-hidden="true">🔭</span> Zukunft</button>
+  <button class="tab-btn" role="tab" id="tab-klima"       aria-selected="false" aria-controls="pane-klima"       onclick="showTab('klima',this)"><span aria-hidden="true">🌱</span> Klimawirkung</button>
+  <button class="tab-btn" role="tab" id="tab-vergleich"   aria-selected="false" aria-controls="pane-vergleich"   onclick="showTab('vergleich',this)"><span aria-hidden="true">📊</span> Jahresvergleich</button>
+</nav>
 
 <!-- ── Tab Content ────────────────────────────────────── -->
-<div class="content">
+<main class="content" id="main-content">
 
   <!-- ① Stromerzeugung ─────────────────────────────── -->
-  <div id="pane-erzeugung" class="pane active">
+  <div id="pane-erzeugung" class="pane active" role="tabpanel" aria-labelledby="tab-erzeugung" tabindex="0">
     <div class="sec-hdr">
       <h2>⚡ Stromerzeugung</h2>
       <p>Solarenergieerzeugung durch Photovoltaikanlage — Jahres- &amp; Monatsverlauf</p>
@@ -308,21 +320,21 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Jahreserzeugung<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-solar-annual"></canvas></div>
+        <div class="cbox"><canvas id="c-solar-annual" role="img" aria-label="Balkendiagramm: Solare Jahreserzeugung in MWh"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Monatliche Verteilung<span id="monthly-chart-sub">kWh Ø Vollbetriebsjahre</span></div>
         <div id="month-sel-wrap" class="month-sel-wrap" style="display:none">
-          <label>Jahr:</label>
+          <label for="month-year-sel">Jahr:</label>
           <select id="month-year-sel"></select>
           <span class="month-badge">Echte Monatsdaten</span>
         </div>
-        <div class="cbox"><canvas id="c-solar-monthly"></canvas></div>
+        <div class="cbox"><canvas id="c-solar-monthly" role="img" aria-label="Balkendiagramm: Monatliche Solarverteilung in kWh"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
       <div class="ctitle">Solare Energiebilanz<span>Eigenverbrauch + Einspeisung MWh</span></div>
-      <div class="cbox sm"><canvas id="c-solar-balance"></canvas></div>
+      <div class="cbox sm"><canvas id="c-solar-balance" role="img" aria-label="Gestapeltes Balkendiagramm: Eigenverbrauch und Einspeisung in MWh"></canvas></div>
     </div>
 
     <!-- EVQ -->
@@ -340,7 +352,7 @@
     </div>
     <div class="ccrd" style="margin-bottom:20px">
       <div class="ctitle">Eigenverbrauchsquote vs. Autarkie<span>% — Zwei Seiten der Systemeffizienz</span></div>
-      <div class="cbox sm"><canvas id="c-evq"></canvas></div>
+      <div class="cbox sm"><canvas id="c-evq" role="img" aria-label="Balkendiagramm: Eigenverbrauchsquote und Autarkie in Prozent"></canvas></div>
     </div>
 
     <div class="analysis">
@@ -356,7 +368,7 @@
   </div>
 
   <!-- ② Verbrauch ──────────────────────────────────── -->
-  <div id="pane-verbrauch" class="pane">
+  <div id="pane-verbrauch" class="pane" role="tabpanel" aria-labelledby="tab-verbrauch" tabindex="0">
     <div class="sec-hdr">
       <h2>🏠 Verbrauch</h2>
       <p>Haushaltsstromverbrauch, Eigenverbrauchsquellen und Netzabhängigkeit</p>
@@ -365,14 +377,15 @@
     <!-- Score Widget -->
     <div class="score-wrap" id="score-widget">
       <div class="score-svg-wrap">
-        <svg class="score-svg" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="42" fill="none" stroke="#263449" stroke-width="12"/>
+        <svg class="score-svg" viewBox="0 0 100 100" role="img" aria-labelledby="score-svg-title">
+          <title id="score-svg-title">Netz-Unabhängigkeits-Score Kreisdiagramm</title>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#263449" stroke-width="12" aria-hidden="true"/>
           <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="#10b981" stroke-width="12"
             stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
-            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease,stroke .4s"/>
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease,stroke .4s" aria-hidden="true"/>
         </svg>
-        <div class="score-num-big" id="score-num" style="color:var(--green)">—</div>
-        <div class="score-denom">/ 100</div>
+        <div class="score-num-big" id="score-num" style="color:var(--green)" aria-live="polite">—</div>
+        <div class="score-denom" aria-hidden="true">/ 100</div>
       </div>
       <div class="score-info">
         <div class="score-title">Netz-Unabhängigkeits-Score</div>
@@ -386,11 +399,11 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Verbrauchsquellen je Jahr<span>gestapelt MWh</span></div>
-        <div class="cbox"><canvas id="c-cons-stacked"></canvas></div>
+        <div class="cbox"><canvas id="c-cons-stacked" role="img" aria-label="Gestapeltes Balkendiagramm: Verbrauchsquellen Solar, Powerwall und Netz in MWh"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Autarkiequote<span>% Eigenversorgung pro Jahr</span></div>
-        <div class="cbox"><canvas id="c-autarky"></canvas></div>
+        <div class="cbox"><canvas id="c-autarky" role="img" aria-label="Liniendiagramm: Autarkiequote in Prozent je Jahr"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
@@ -410,7 +423,7 @@
   </div>
 
   <!-- ③ Einspeisung ────────────────────────────────── -->
-  <div id="pane-einspeisung" class="pane">
+  <div id="pane-einspeisung" class="pane" role="tabpanel" aria-labelledby="tab-einspeisung" tabindex="0">
     <div class="sec-hdr">
       <h2>🔌 Netzeinspeisung</h2>
       <p>Überschussstrom ins öffentliche Netz — Menge, Erlöse und Versorgungsleistung</p>
@@ -421,16 +434,16 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Jährliche Einspeisung<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-feedin-annual"></canvas></div>
+        <div class="cbox"><canvas id="c-feedin-annual" role="img" aria-label="Balkendiagramm: Jährliche Netzeinspeisung in MWh"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Erzeugung vs. Einspeisung<span>Eigenverbrauchsanteil sichtbar</span></div>
-        <div class="cbox"><canvas id="c-feedin-vs-solar"></canvas></div>
+        <div class="cbox"><canvas id="c-feedin-vs-solar" role="img" aria-label="Gestapeltes Balkendiagramm: Eigenverbrauch vs. Einspeisung in MWh"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
       <div class="ctitle">Jährliche Einspeisevergütung<span>Geschätzte Einnahmen €</span></div>
-      <div class="cbox sm"><canvas id="c-feedin-revenue"></canvas></div>
+      <div class="cbox sm"><canvas id="c-feedin-revenue" role="img" aria-label="Balkendiagramm: Geschätzte jährliche Einspeisevergütung in Euro"></canvas></div>
     </div>
     <div class="analysis">
       <h4>Analyse — Netzeinspeisung</h4>
@@ -445,7 +458,7 @@
   </div>
 
   <!-- ④ Batterie ───────────────────────────────────── -->
-  <div id="pane-batterie" class="pane">
+  <div id="pane-batterie" class="pane" role="tabpanel" aria-labelledby="tab-batterie" tabindex="0">
     <div class="sec-hdr">
       <h2>🔋 Batterie-Nutzung (Tesla Powerwall)</h2>
       <p>Speicherung, Entladung und Einfluss auf Autarkie und Netzbezug</p>
@@ -456,11 +469,11 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Powerwall-Entladung je Jahr<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-bat-annual"></canvas></div>
+        <div class="cbox"><canvas id="c-bat-annual" role="img" aria-label="Balkendiagramm: Jährliche Powerwall-Entladung in MWh"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Powerwall vs. Netzbezug<span>Batterie verdrängt Grid (MWh)</span></div>
-        <div class="cbox"><canvas id="c-bat-vs-grid"></canvas></div>
+        <div class="cbox"><canvas id="c-bat-vs-grid" role="img" aria-label="Liniendiagramm: Powerwall-Entladung vs. Netzbezug in MWh"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
@@ -480,7 +493,7 @@
   </div>
 
   <!-- ⑤ Vorteile ───────────────────────────────────── -->
-  <div id="pane-vorteile" class="pane">
+  <div id="pane-vorteile" class="pane" role="tabpanel" aria-labelledby="tab-vorteile" tabindex="0">
     <div class="sec-hdr">
       <h2>💰 Vorteile &amp; Ersparnisse</h2>
       <p>Wirtschaftliche, energetische und strategische Vorteile der Anlage auf einen Blick</p>
@@ -488,7 +501,7 @@
 
     <div class="benefit-grid">
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(245,158,11,.15)">💰</div>
+        <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">💰</div>
         <div class="bbody">
           <h4>Finanzielle Ersparnis</h4>
           <p>Eigenverbrauch + Einspeisevergütung kombiniert.</p>
@@ -497,7 +510,7 @@
         </div>
       </div>
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(16,185,129,.15)">🌍</div>
+        <div class="bicn" style="background:rgba(16,185,129,.15)" aria-hidden="true">🌍</div>
         <div class="bbody">
           <h4>CO₂-Einsparung</h4>
           <p>Vermiedene Emissionen durch solaren Eigenverbrauch.</p>
@@ -506,7 +519,7 @@
         </div>
       </div>
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(6,182,212,.15)">🔒</div>
+        <div class="bicn" style="background:rgba(6,182,212,.15)" aria-hidden="true">🔒</div>
         <div class="bbody">
           <h4>Energieunabhängigkeit</h4>
           <p>Nahezu vollständige Entkopplung vom Stromnetz.</p>
@@ -515,7 +528,7 @@
         </div>
       </div>
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(139,92,246,.15)">📈</div>
+        <div class="bicn" style="background:rgba(139,92,246,.15)" aria-hidden="true">📈</div>
         <div class="bbody">
           <h4>Immobilien-Wertsteigerung</h4>
           <p>PV + Speicher erhöhen den Marktwert der Immobilie.</p>
@@ -524,7 +537,7 @@
         </div>
       </div>
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(239,68,68,.15)">⚡</div>
+        <div class="bicn" style="background:rgba(239,68,68,.15)" aria-hidden="true">⚡</div>
         <div class="bbody">
           <h4>Preisstabilität</h4>
           <p>Eigenverbrauch ist vom Börsenpreis entkoppelt (Ø +5 %/Jahr DE).</p>
@@ -533,7 +546,7 @@
         </div>
       </div>
       <div class="bcrd">
-        <div class="bicn" style="background:rgba(245,158,11,.15)">🔋</div>
+        <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">🔋</div>
         <div class="bbody">
           <h4>Blackout-Schutz</h4>
           <p>Powerwall versorgt Haushalt auch bei Netzausfall.</p>
@@ -546,11 +559,11 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Jährliche Gesamtersparnis<span>€ (Eigenverbrauch + Einspeisung)</span></div>
-        <div class="cbox"><canvas id="c-savings"></canvas></div>
+        <div class="cbox"><canvas id="c-savings" role="img" aria-label="Gestapeltes Balkendiagramm: Jährliche Gesamtersparnis durch Eigenverbrauch und Einspeisung"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Stromkosten: ohne vs. mit Solar<span>€ pro Jahr</span></div>
-        <div class="cbox"><canvas id="c-cost-cmp"></canvas></div>
+        <div class="cbox"><canvas id="c-cost-cmp" role="img" aria-label="Liniendiagramm: Vergleich Stromkosten ohne Solar vs. mit Solar in Euro"></canvas></div>
       </div>
     </div>
     <div class="analysis">
@@ -569,7 +582,7 @@
   </div>
 
   <!-- ⑥ Zukunft ────────────────────────────────────── -->
-  <div id="pane-zukunft" class="pane">
+  <div id="pane-zukunft" class="pane" role="tabpanel" aria-labelledby="tab-zukunft" tabindex="0">
     <div class="sec-hdr">
       <h2>🔭 Zukunft &amp; Prognosen</h2>
       <p>Trendanalyse, Hochrechnungen und Optimierungsempfehlungen 2026–2030</p>
@@ -602,7 +615,7 @@
 
     <div class="ccrd">
       <div class="ctitle">Erzeugungs-Prognose 2022–2030<span>Ist-Werte (amber) + Projektion (cyan)</span></div>
-      <div class="cbox tall"><canvas id="c-forecast"></canvas></div>
+      <div class="cbox tall"><canvas id="c-forecast" role="img" aria-label="Balkendiagramm: Solarerzeugungs-Prognose 2022 bis 2030 mit Ist-Werten und Projektion"></canvas></div>
     </div>
 
     <div class="ccrd">
@@ -633,29 +646,29 @@
   </div>
 
   <!-- ⑦ Klimawirkung ──────────────────────────────── -->
-  <div id="pane-klima" class="pane">
+  <div id="pane-klima" class="pane" role="tabpanel" aria-labelledby="tab-klima" tabindex="0">
     <div class="sec-hdr">
       <h2>🌱 Klimawirkung</h2>
       <p>CO₂-Bilanz, Umweltbeitrag und ökologischer Fußabdruck der Solaranlage</p>
     </div>
 
     <div class="impact-grid">
-      <div class="icrd"><div class="icrd-icon">🌿</div><div class="icrd-val" id="ic-co2-total">—</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
-      <div class="icrd"><div class="icrd-icon">🌳</div><div class="icrd-val" id="ic-trees">—</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
-      <div class="icrd"><div class="icrd-icon">🚗</div><div class="icrd-val" id="ic-km">—</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
-      <div class="icrd"><div class="icrd-icon">✈️</div><div class="icrd-val" id="ic-flights">—</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
-      <div class="icrd"><div class="icrd-icon">💡</div><div class="icrd-val" id="ic-self">—</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
-      <div class="icrd"><div class="icrd-icon">⚡</div><div class="icrd-val" id="ic-total">—</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🌿</div><div class="icrd-val" id="ic-co2-total">—</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🌳</div><div class="icrd-val" id="ic-trees">—</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🚗</div><div class="icrd-val" id="ic-km">—</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">✈️</div><div class="icrd-val" id="ic-flights">—</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">💡</div><div class="icrd-val" id="ic-self">—</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
+      <div class="icrd"><div class="icrd-icon" aria-hidden="true">⚡</div><div class="icrd-val" id="ic-total">—</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
     </div>
 
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">CO₂-Einsparung je Jahr<span>kg CO₂</span></div>
-        <div class="cbox"><canvas id="c-co2-annual"></canvas></div>
+        <div class="cbox"><canvas id="c-co2-annual" role="img" aria-label="Balkendiagramm: CO₂-Einsparung je Jahr in Kilogramm"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Kumulierte CO₂-Einsparung<span>kg — Gesamtbilanz</span></div>
-        <div class="cbox"><canvas id="c-co2-cum"></canvas></div>
+        <div class="cbox"><canvas id="c-co2-cum" role="img" aria-label="Liniendiagramm: Kumulierte CO₂-Einsparung in Kilogramm"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
@@ -676,7 +689,7 @@
 
 
   <!-- ⑧ Jahresvergleich ─────────────────────────────── -->
-  <div id="pane-vergleich" class="pane">
+  <div id="pane-vergleich" class="pane" role="tabpanel" aria-labelledby="tab-vergleich" tabindex="0">
     <div class="sec-hdr">
       <h2>📊 Jahresvergleich</h2>
       <p>Alle Kernindikatoren direkt gegenübergestellt — Radar, YoY-Entwicklung und Vollvergleich</p>
@@ -684,11 +697,11 @@
     <div class="cgrid">
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Systemleistung je Jahr<span>Normalisiert — Bestes Jahr = 100 %</span></div>
-        <div class="cbox tall"><canvas id="c-radar"></canvas></div>
+        <div class="cbox tall"><canvas id="c-radar" role="img" aria-label="Radardiagramm: Systemleistung je Jahr normalisiert auf 100 Prozent"></canvas></div>
       </div>
       <div class="ccrd" style="margin-bottom:0">
         <div class="ctitle">Year-over-Year Entwicklung<span>% Veränderung zum Vorjahr</span></div>
-        <div class="cbox tall"><canvas id="c-yoy"></canvas></div>
+        <div class="cbox tall"><canvas id="c-yoy" role="img" aria-label="Balkendiagramm: Year-over-Year Veränderung der Kernindikatoren in Prozent"></canvas></div>
       </div>
     </div>
     <div class="ccrd" style="margin-top:18px">
@@ -706,21 +719,26 @@
     </div>
   </div>
 
-</div><!-- /content -->
+</main><!-- /content -->
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 // REACTIVE SETTINGS  (updated by price bar inputs)
 // ═══════════════════════════════════════════════════════════════════════════
-let buyPrice   = 30;    // ct/kWh
-let sellPrice  = 8;     // ct/kWh
-let systemCost = 15000; // €
-let currentRows = null; // last loaded rows — for re-derive on price change
+let buyPrice    = 30;    // ct/kWh
+let sellPrice   = 8;     // ct/kWh
+let systemCost  = 15000; // €
+let currentRows = null;  // last loaded rows — for re-derive on price change
+let _derived    = null;  // last derived data object
+let builtTabs   = new Set(); // tracks which tabs have had charts initialised
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIXED CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════
-const CO2_KG    = 0.380;  // kg CO₂ per kWh (DE Bundesnetz-Durchschnitt)
+const CO2_KG           = 0.380; // kg CO₂ per kWh (DE Bundesnetz-Durchschnitt)
+const TREE_CO2_KG      = 21;    // kg CO₂ absorbed per tree per year
+const CAR_CO2_G_PER_KM = 120;   // g CO₂ per km (average petrol car)
+const FLIGHT_CO2_KG    = 800;   // kg CO₂ for FRA-JFK round equivalent
 const MONTH_LABELS  = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 const MONTH_FACTORS = [0.03,0.05,0.08,0.11,0.13,0.14,0.13,0.11,0.09,0.06,0.04,0.03];
 
@@ -914,33 +932,49 @@ function nukeCharts() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BUILD ALL CHARTS
+// PER-TAB CHART BUILDERS  (called lazily on first tab activation)
 // ═══════════════════════════════════════════════════════════════════════════
-function buildCharts(d) {
-  nukeCharts();
-  const {lbls,solar,selfCons,solDirect,pw,fgrid,tgrid,autarky,
-         co2,feedRev,costWout,costWith,mKwh,cumCO2,
-         fYears,fSolar,fToGrid,fIsAct} = d;
-  const n = lbls.length;
+function buildChartsForTab(tabId, d) {
+  if (builtTabs.has(tabId)) return;
+  const builders = {
+    erzeugung:   _buildErzeugungCharts,
+    verbrauch:   _buildVerbrauchCharts,
+    einspeisung: _buildEinspeisungCharts,
+    batterie:    _buildBatterieCharts,
+    vorteile:    _buildVorteileCharts,
+    zukunft:     _buildZukunftCharts,
+    klima:       _buildKlimaCharts,
+    vergleich:   _buildVergleichCharts,
+  };
+  if (builders[tabId]) { builders[tabId](d); builtTabs.add(tabId); }
+}
 
-  // ── Tab 1: Stromerzeugung
+function _buildErzeugungCharts(d) {
+  const {lbls,solar,selfCons,tgrid,autarky,evq} = d;
+  const n = lbls.length;
   CH.s1 = new Chart(document.getElementById('c-solar-annual'),{type:'bar',
     data:{labels:lbls,datasets:[{label:'Solar (MWh)',data:solar,
       backgroundColor:grad(245,158,11,n),borderColor:'#f59e0b',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:ttip},scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-
-  // Monthly chart: real data if available, simulated otherwise
   buildMonthlyChart(d, d.yrs[d.yrs.length-1]);
-
   CH.s3 = new Chart(document.getElementById('c-solar-balance'),{type:'bar',
     data:{labels:lbls,datasets:[
       {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
       {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.7)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
+  CH.evq = new Chart(document.getElementById('c-evq'),{type:'bar',
+    data:{labels:lbls,datasets:[
+      {label:'Autarkie — Verbrauchsperspektive (%)',data:autarky,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
+      {label:'Eigenverbrauchsquote — Erzeugerperspektive (%)',data:evq,backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
+      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+}
 
-  // ── Tab 2: Verbrauch
+function _buildVerbrauchCharts(d) {
+  const {lbls,solDirect,pw,fgrid,autarky} = d;
   CH.v1 = new Chart(document.getElementById('c-cons-stacked'),{type:'bar',
     data:{labels:lbls,datasets:[
       {label:'Solar direkt (MWh)',data:solDirect,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
@@ -948,84 +982,166 @@ function buildCharts(d) {
       {label:'Netz (MWh)',data:fgrid,backgroundColor:'rgba(239,68,68,.75)',borderColor:'#ef4444',borderWidth:1,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
-
   CH.v2 = new Chart(document.getElementById('c-autarky'),{type:'line',
     data:{labels:lbls,datasets:[{label:'Autarkie (%)',data:autarky,
       borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',fill:true,tension:.4,
       borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
       scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+}
 
-  // ── Tab 3: Einspeisung
+function _buildEinspeisungCharts(d) {
+  const {lbls,selfCons,tgrid,feedRev} = d;
+  const n = lbls.length;
   CH.e1 = new Chart(document.getElementById('c-feedin-annual'),{type:'bar',
     data:{labels:lbls,datasets:[{label:'Einspeisung (MWh)',data:tgrid,
       backgroundColor:grad(6,182,212,n),borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-
   CH.e2 = new Chart(document.getElementById('c-feedin-vs-solar'),{type:'bar',
     data:{labels:lbls,datasets:[
       {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
       {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.75)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
-
   CH.e3 = new Chart(document.getElementById('c-feedin-revenue'),{type:'bar',
     data:{labels:lbls,datasets:[{label:'Vergütung (€)',data:feedRev,
       backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
+}
 
-  // ── Tab 4: Batterie
+function _buildBatterieCharts(d) {
+  const {lbls,pw,fgrid} = d;
+  const n = lbls.length;
   CH.b1 = new Chart(document.getElementById('c-bat-annual'),{type:'bar',
     data:{labels:lbls,datasets:[{label:'Powerwall (MWh)',data:pw,
       backgroundColor:grad(139,92,246,n),borderColor:'#8b5cf6',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-
   CH.b2 = new Chart(document.getElementById('c-bat-vs-grid'),{type:'line',
     data:{labels:lbls,datasets:[
       {label:'Powerwall (MWh)',data:pw,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#8b5cf6'},
       {label:'Netzbezug (MWh)',data:fgrid,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
+}
 
-  // ── Tab 5: Vorteile
+function _buildVorteileCharts(d) {
+  const {lbls,selfCons,feedRev,costWout,costWith} = d;
   CH.p1 = new Chart(document.getElementById('c-savings'),{type:'bar',
     data:{labels:lbls,datasets:[
       {label:'Eigenverbrauch-Ersparnis (€)',data:selfCons.map(sc=>+(sc*1000*(buyPrice/100)).toFixed(0)),backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
       {label:'Einspeisevergütung (€)',data:feedRev,backgroundColor:'rgba(16,185,129,.75)',borderColor:'#10b981',borderWidth:1,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
-
   CH.p2 = new Chart(document.getElementById('c-cost-cmp'),{type:'line',
     data:{labels:lbls,datasets:[
       {label:'Ohne Solar (€)',data:costWout,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'},
       {label:'Mit Solar (€)',data:costWith,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
+}
 
-  // ── Tab 6: Zukunft
+function _buildZukunftCharts(d) {
+  const {fYears,fSolar,fIsAct} = d;
   CH.z1 = new Chart(document.getElementById('c-forecast'),{type:'bar',
     data:{labels:fYears.map(String),datasets:[
       {label:'Ist-Wert (MWh)',data:fSolar.map((v,i)=>fIsAct[i]?v:null),backgroundColor:'rgba(245,158,11,.8)',borderColor:'#f59e0b',borderWidth:2,borderRadius:5},
       {label:'Prognose (MWh)',data:fSolar.map((v,i)=>!fIsAct[i]?v:null),backgroundColor:'rgba(6,182,212,.5)',borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,title:{display:true,text:'MWh',color:'#94a3b8'}}}}});
+}
 
-  // ── Tab 7: Klimawirkung
+function _buildKlimaCharts(d) {
+  const {lbls,co2,cumCO2} = d;
+  const n = lbls.length;
   CH.k1 = new Chart(document.getElementById('c-co2-annual'),{type:'bar',
     data:{labels:lbls,datasets:[{label:'CO₂ eingespart (kg)',data:co2,
       backgroundColor:grad(16,185,129,n),borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
       scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-
   CH.k2 = new Chart(document.getElementById('c-co2-cum'),{type:'line',
     data:{labels:lbls,datasets:[{label:'Kumuliert (kg)',data:cumCO2,
       borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.15)',fill:true,tension:.4,
       borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
       scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' kg'}}}}});
+}
+
+function _buildVergleichCharts(d) {
+  const metrics = [
+    {lbl:'Solar (MWh)',       arr:d.solar,   fmt:v=>de(v)+'MWh'},
+    {lbl:'Autarkie (%)',      arr:d.autarky, fmt:v=>de(v)+'%'},
+    {lbl:'EVQ (%)',           arr:d.evq,     fmt:v=>de(v)+'%'},
+    {lbl:'Einspeisung (MWh)',arr:d.tgrid,   fmt:v=>de(v)+'MWh'},
+  ];
+  const stats = metrics.map(m => {
+    const mx = Math.max(...m.arr);
+    return { normArr: m.arr.map(v => mx > 0 ? Math.round(v/mx*100) : 0) };
+  });
+  CH.radar = new Chart(document.getElementById('c-radar'), {
+    type:'radar',
+    data:{
+      labels: ['Solar (MWh)','Autarkie (%)','EVQ (%)','Einspeisung (MWh)','Powerwall (MWh)','Ersparnis (€)','CO₂ (kg)'],
+      datasets: d.yrs.map((yr,i)=>({
+        label: String(yr),
+        data: (() => {
+          const allMetrics = [
+            {arr:d.solar},{arr:d.autarky},{arr:d.evq},{arr:d.tgrid},
+            {arr:d.pw},{arr:d.savings},{arr:d.co2}
+          ];
+          return allMetrics.map(m => {
+            const mx = Math.max(...m.arr);
+            return mx > 0 ? Math.round(m.arr[i]/mx*100) : 0;
+          });
+        })(),
+        borderColor:          PCOLS[i%PCOLS.length],
+        backgroundColor:      PCOLS_A[i%PCOLS_A.length],
+        borderWidth:2, pointRadius:3,
+        pointBackgroundColor: PCOLS[i%PCOLS.length],
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:leg, tooltip:ttip},
+      scales:{r:{
+        min:0, max:100,
+        ticks:{stepSize:25,callback:v=>v+'%',color:'#94a3b8',backdropColor:'transparent'},
+        grid:{color:'#334155'}, angleLines:{color:'#334155'},
+        pointLabels:{color:'#94a3b8',font:{size:10}}
+      }}
+    }
+  });
+  if (d.yrs.length >= 2) {
+    const yoyMetrics = [
+      {lbl:'Solar (MWh)',arr:d.solar},{lbl:'Autarkie (%)',arr:d.autarky},
+      {lbl:'EVQ (%)',arr:d.evq},{lbl:'Einspeisung (MWh)',arr:d.tgrid}
+    ];
+    CH.yoy = new Chart(document.getElementById('c-yoy'), {
+      type:'bar',
+      data:{
+        labels: d.yrs.slice(1).map((yr,i)=>`${d.yrs[i]}→${yr}`),
+        datasets: yoyMetrics.map((m,mi)=>({
+          label: m.lbl,
+          data:  m.arr.slice(1).map((v,i) => m.arr[i]>0 ? +((v/m.arr[i]-1)*100).toFixed(1) : 0),
+          backgroundColor: PCOLS[mi%PCOLS.length]+'99',
+          borderColor:     PCOLS[mi%PCOLS.length],
+          borderWidth:1, borderRadius:3,
+        }))
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:leg, tooltip:{...ttip, callbacks:{
+          label:ctx=>`${ctx.dataset.label}: ${ctx.raw>=0?'+':''}${ctx.raw}%`
+        }}},
+        scales:{
+          x:{grid:gCfg},
+          y:{grid:gCfg, ticks:{callback:v=>(v>=0?'+':'')+v+'%'}}
+        }
+      }
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1060,7 +1176,7 @@ function buildMonthlyChart(d, yr) {
         scales:{x:{grid:gCfg},y:{grid:gCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}
     });
     // wire year selector
-    sel.onchange = () => buildMonthlyChart(window._lastDerived, parseInt(sel.value));
+    sel.onchange = () => { if (_derived) buildMonthlyChart(_derived, parseInt(sel.value)); };
   } else {
     selWrap.style.display = 'none';
     const fullYrs = d.yrs.filter((_,i) => d.solar[i] > 5);
@@ -1095,14 +1211,14 @@ function updateProgressBars(d) {
   document.getElementById('prog-autarky').innerHTML = d.yrs.map((y,i)=>`
     <div class="prog-item">
       <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${d.autarky[i]} %</span></div>
-      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,d.autarky[i])}%;background:${PCOLS[i%PCOLS.length]}"></div></div>
+      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${d.autarky[i]}" aria-valuemin="0" aria-valuemax="100" aria-label="${y}: ${d.autarky[i]}% Autarkie" style="width:${Math.min(100,d.autarky[i])}%;background:${PCOLS[i%PCOLS.length]}"></div></div>
     </div>`).join('');
 
   document.getElementById('prog-battery').innerHTML = d.yrs.map((y,i)=>{
-    const pct = +(d.pw[i]/d.home[i]*100).toFixed(1);
+    const pct = d.home[i] > 0 ? +(d.pw[i]/d.home[i]*100).toFixed(1) : 0;
     return `<div class="prog-item">
       <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${pct} % Powerwall-Anteil</span></div>
-      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,pct)}%;background:#8b5cf6"></div></div>
+      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${y}: ${pct}% Powerwall-Anteil" style="width:${Math.min(100,pct)}%;background:#8b5cf6"></div></div>
     </div>`;}).join('');
 
   const targets = [
@@ -1115,7 +1231,7 @@ function updateProgressBars(d) {
     const pct = Math.min(100, g.v/g.max*100).toFixed(1);
     return `<div class="prog-item">
       <div class="prog-hdr"><span class="prog-lbl">${g.lbl}</span><span class="prog-val">${pct} %</span></div>
-      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.col}"></div></div>
+      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${g.lbl}: ${pct}% erreicht" style="width:${pct}%;background:${g.col}"></div></div>
     </div>`;}).join('');
 }
 
@@ -1134,9 +1250,9 @@ function updateTable(d) {
 }
 
 function updateImpact(d) {
-  const trees   = Math.round(d.totalCO2 / 21);
-  const km      = Math.round(d.totalCO2 * 1000 / 120);
-  const flights = (d.totalCO2 / 800).toFixed(1).replace('.',',');
+  const trees   = Math.round(d.totalCO2 / TREE_CO2_KG);
+  const km      = Math.round(d.totalCO2 * 1000 / CAR_CO2_G_PER_KM);
+  const flights = (d.totalCO2 / FLIGHT_CO2_KG).toFixed(1).replace('.',',');
   document.getElementById('ic-co2-total').textContent = de(d.totalCO2,0) + ' kg';
   document.getElementById('ic-trees').textContent     = de(trees,0);
   document.getElementById('ic-km').textContent        = de(km,0) + ' km';
@@ -1148,15 +1264,6 @@ function updateImpact(d) {
 function updateEVQ(d) {
   document.getElementById('evq-last').textContent    = de(d.lastEvq) + ' %';
   document.getElementById('evq-autarky').textContent = de(d.lastAut) + ' %';
-  // EVQ chart
-  if (CH.evq) try { CH.evq.destroy(); } catch(e){}
-  CH.evq = new Chart(document.getElementById('c-evq'),{type:'bar',
-    data:{labels:d.lbls,datasets:[
-      {label:'Autarkie — Verbrauchsperspektive (%)',data:d.autarky,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
-      {label:'Eigenverbrauchsquote — Erzeugerperspektive (%)',data:d.evq,backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
 }
 
 function updateScore(d) {
@@ -1269,11 +1376,12 @@ function updateCards(d) {
 // ═══════════════════════════════════════════════════════════════════════════
 function refreshAll(rows) {
   currentRows = rows;
-  window._lastDerived = null;
+  _derived = null;
   const d = derive(rows);
-  window._lastDerived = d;
+  _derived = d;
+  nukeCharts();
+  builtTabs.clear();
   updateKPIs(d);
-  buildCharts(d);
   updateProgressBars(d);
   updateTable(d);
   updateImpact(d);
@@ -1282,6 +1390,9 @@ function refreshAll(rows) {
   updateROI(d);
   updateCards(d);
   buildComparisonTab(d);
+  // Only build charts for the currently visible tab
+  const activePaneId = document.querySelector('.pane.active')?.id ?? 'pane-erzeugung';
+  buildChartsForTab(activePaneId.replace('pane-', ''), d);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1355,7 +1466,7 @@ refreshAll(DEFAULT_ROWS);
 
 
 // ═══════════════════════════════════════════════════════════════════════════
-// JAHRESVERGLEICH
+// JAHRESVERGLEICH  — DOM-only (charts built lazily in _buildVergleichCharts)
 // ═══════════════════════════════════════════════════════════════════════════
 function buildComparisonTab(d) {
   const metrics = [
@@ -1367,68 +1478,12 @@ function buildComparisonTab(d) {
     {lbl:'Ersparnis (€)',    arr:d.savings, fmt:v=>de(v,0)+'€'},
     {lbl:'CO₂ (kg)',         arr:d.co2,     fmt:v=>de(v,0)+'kg'},
   ];
-
-  // Normalize each metric: best year = 100; also store mx/bestIdx for table
   const stats = metrics.map(m => {
     const mx = Math.max(...m.arr);
     const bestIdx = m.arr.indexOf(mx);
-    return { normArr: m.arr.map(v => mx > 0 ? Math.round(v/mx*100) : 0), mx, bestIdx };
+    return { mx, bestIdx };
   });
 
-  // Radar chart
-  CH.radar = new Chart(document.getElementById('c-radar'), {
-    type:'radar',
-    data:{
-      labels: metrics.map(m=>m.lbl),
-      datasets: d.yrs.map((yr,i)=>({
-        label: String(yr),
-        data:  stats.map(s => s.normArr[i] ?? 0),
-        borderColor:          PCOLS[i%PCOLS.length],
-        backgroundColor:      PCOLS_A[i%PCOLS_A.length],
-        borderWidth:2, pointRadius:3,
-        pointBackgroundColor: PCOLS[i%PCOLS.length],
-      }))
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:leg, tooltip:ttip},
-      scales:{r:{
-        min:0, max:100,
-        ticks:{stepSize:25,callback:v=>v+'%',color:'#94a3b8',backdropColor:'transparent'},
-        grid:{color:'#334155'}, angleLines:{color:'#334155'},
-        pointLabels:{color:'#94a3b8',font:{size:10}}
-      }}
-    }
-  });
-
-  // YoY bar chart (% change vs. previous year)
-  if (d.yrs.length >= 2) {
-    CH.yoy = new Chart(document.getElementById('c-yoy'), {
-      type:'bar',
-      data:{
-        labels: d.yrs.slice(1).map((yr,i)=>`${d.yrs[i]}→${yr}`),
-        datasets: metrics.slice(0,4).map((m,mi)=>({
-          label: m.lbl,
-          data:  m.arr.slice(1).map((v,i) => m.arr[i]>0 ? +((v/m.arr[i]-1)*100).toFixed(1) : 0),
-          backgroundColor: PCOLS[mi%PCOLS.length]+'99',
-          borderColor:     PCOLS[mi%PCOLS.length],
-          borderWidth:1, borderRadius:3,
-        }))
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:leg, tooltip:{...ttip, callbacks:{
-          label:ctx=>`${ctx.dataset.label}: ${ctx.raw>=0?'+':''}${ctx.raw}%`
-        }}},
-        scales:{
-          x:{grid:gCfg},
-          y:{grid:gCfg, ticks:{callback:v=>(v>=0?'+':'')+v+'%'}}
-        }
-      }
-    });
-  }
-
-  // Comparison table
   document.getElementById('cmp-head').innerHTML =
     `<tr><th>Kennzahl</th>${d.yrs.map((yr,i)=>`<th style="color:${PCOLS[i%PCOLS.length]}">${yr}</th>`).join('')}</tr>`;
 
@@ -1447,10 +1502,9 @@ function buildComparisonTab(d) {
     return `<tr><td>${m.lbl}</td>${cells}</tr>`;
   }).join('');
 
-  // Auto-generated analysis
-  const bestAutYr  = d.yrs[d.autarky.indexOf(Math.max(...d.autarky))];
-  const bestEvqYr  = d.yrs[d.evq.indexOf(Math.max(...d.evq))];
-  const growthPct  = d.solar[0]>0 ? Math.round((d.solar[d.solar.length-1]/d.solar[0]-1)*100) : 0;
+  const bestAutYr = d.yrs[d.autarky.indexOf(Math.max(...d.autarky))];
+  const bestEvqYr = d.yrs[d.evq.indexOf(Math.max(...d.evq))];
+  const growthPct = d.solar[0]>0 ? Math.round((d.solar[d.solar.length-1]/d.solar[0]-1)*100) : 0;
   document.getElementById('cmp-analysis').innerHTML = [
     `<strong>${bestAutYr}</strong> ist das Rekordjahr mit <strong>${de(Math.max(...d.autarky))} % Autarkie</strong>.`,
     `Solarertrag: <strong>${de(d.solar[0])} MWh</strong> (${d.yrs[0]}) → <strong>${de(d.solar[d.solar.length-1])} MWh</strong> (${d.yrs[d.yrs.length-1]}) — gesamt <strong>${growthPct>=0?'+':''}${growthPct} %</strong>.`,
@@ -1461,10 +1515,15 @@ function buildComparisonTab(d) {
 
 // ─── Tab Switching ────────────────────────────────────────────────────────
 function showTab(id, btn) {
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('pane-'+id).classList.add('active');
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.getElementById('pane-' + id).classList.add('active');
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  if (_derived) buildChartsForTab(id, _derived);
 }
 </script>
 </body>
