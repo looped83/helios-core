@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Helios Core – Photovoltaik-Dashboard für Solarenergie, Tesla Powerwall und Netzeinspeisung. Jahres- und Monatsauswertung 2022–2026 mit Echtzeit-Wirtschaftlichkeitsanalyse.">
   <title>Helios Core</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
-  <script src="chart.umd.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --bg:#0f172a;--surface:#1e293b;--surface2:#263449;--border:#334155;
       --text:#e2e8f0;--muted:#94a3b8;
       --amber:#f59e0b;--amber2:#fcd34d;--amber3:#d97706;
-      --cyan:#06b6d4;--green:#10b981;--violet:#8b5cf6;
-      --red:#ef4444;--rose:#f43f5e;--blue:#3b82f6;--orange:#f97316;
+      --cyan:#06b6d4;--green:#10b981;--violet:#a78bfa;
+      --red:#f87171;--rose:#f43f5e;--blue:#3b82f6;--orange:#f97316;
     }
     body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
@@ -66,7 +66,7 @@
     .badge-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;
       padding:2px 8px;border-radius:10px;margin-top:7px}
     .t-up{background:rgba(16,185,129,.15);color:var(--green)}
-    .t-dn{background:rgba(239,68,68,.15);color:var(--red)}
+    .t-dn{background:rgba(248,113,113,.15);color:var(--red)}
     .t-eq{background:rgba(148,163,184,.15);color:var(--muted)}
 
     /* ── Chart Grid ── */
@@ -82,13 +82,13 @@
     /* ── Analysis ── */
     .analysis{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);
       border-radius:8px;padding:14px 18px;margin-top:4px}
-    .analysis h4{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:9px;text-transform:uppercase;letter-spacing:.5px}
+    .analysis h3{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:9px;text-transform:uppercase;letter-spacing:.5px}
     .analysis ul{list-style:none;display:flex;flex-direction:column;gap:6px}
     .analysis li{font-size:12px;color:var(--muted);padding-left:14px;position:relative;line-height:1.5}
     .analysis li::before{content:'→';position:absolute;left:0;color:var(--amber)}
     .analysis li strong{color:var(--text)}
     .analysis.green{border-left-color:var(--green)}
-    .analysis.green h4{color:var(--green)}
+    .analysis.green h3{color:var(--green)}
     .analysis.green li::before{color:var(--green)}
 
     /* ── Progress Bars ── */
@@ -113,7 +113,7 @@
       padding:18px;display:flex;gap:14px;align-items:flex-start}
     .bicn{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;
       justify-content:center;font-size:20px;flex-shrink:0}
-    .bbody h4{font-size:13px;font-weight:600;margin-bottom:3px}
+    .bbody h3{font-size:13px;font-weight:600;margin-bottom:3px}
     .bbody p{font-size:11px;color:var(--muted);line-height:1.5}
     .bhi{font-size:18px;font-weight:700;margin-top:3px}
 
@@ -356,7 +356,7 @@
     </div>
 
     <div class="analysis">
-      <h4>Analyse — Stromerzeugung</h4>
+      <h3>Analyse — Stromerzeugung</h3>
       <ul>
         <li><strong>2022 (Inbetriebnahme):</strong> Nur 2,4 MWh — Anlage wurde unterjährig aufgeschaltet, daher deutlich unter dem Jahrespotenzial.</li>
         <li><strong>2023–2025 (Vollbetrieb):</strong> Stabile 10,0–10,4 MWh/Jahr belegen eine zuverlässige und konsistente Anlagenleistung.</li>
@@ -411,7 +411,7 @@
       <div class="prog-list" id="prog-autarky"></div>
     </div>
     <div class="analysis">
-      <h4>Analyse — Verbrauch &amp; Eigenversorgung</h4>
+      <h3>Analyse — Verbrauch &amp; Eigenversorgung</h3>
       <ul>
         <li><strong>+30 Pp. Autarkiesteigerung:</strong> Von ~63 % (2022) auf 93,5 % (2025) — eine herausragende Entwicklung innerhalb von 3 Jahren.</li>
         <li><strong>Powerwall-Effekt:</strong> Die Batterie ermöglichte den Sprung von ~84 % (2024) auf 93,5 % (2025), trotz leicht gesunkenem Verbrauch.</li>
@@ -446,7 +446,7 @@
       <div class="cbox sm"><canvas id="c-feedin-revenue" role="img" aria-label="Balkendiagramm: Geschätzte jährliche Einspeisevergütung in Euro"></canvas></div>
     </div>
     <div class="analysis">
-      <h4>Analyse — Netzeinspeisung</h4>
+      <h3>Analyse — Netzeinspeisung</h3>
       <ul>
         <li><strong>Hoher Überschuss:</strong> Ø 74 % der erzeugten Energie werden eingespeist — das System produziert deutlich mehr als der Haushalt benötigt.</li>
         <li><strong>Passives Einkommen:</strong> Geschätzte 2.160 € Vergütung über die Gesamtlaufzeit bei 8 ct/kWh (aktueller DE-Satz).</li>
@@ -481,7 +481,7 @@
       <div class="prog-list" id="prog-battery"></div>
     </div>
     <div class="analysis">
-      <h4>Analyse — Powerwall</h4>
+      <h3>Analyse — Powerwall</h3>
       <ul>
         <li><strong>Stetige Steigerung:</strong> Powerwall-Nutzung von 0,38 MWh (2022) auf 1,1 MWh (2025) — Optimierung von Lade-/Entlade-Strategien wirkt.</li>
         <li><strong>Inverse Korrelation:</strong> Mit jedem MWh mehr Powerwall-Entladung sinkt der Netzbezug proportional — perfekte Substitution.</li>
@@ -503,7 +503,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">💰</div>
         <div class="bbody">
-          <h4>Finanzielle Ersparnis</h4>
+          <h3>Finanzielle Ersparnis</h3>
           <p>Eigenverbrauch + Einspeisevergütung kombiniert.</p>
           <div class="bhi" id="bc-total-sav" style="color:var(--amber)">—</div>
           <p style="margin-top:3px">Kumuliert 2022–2026</p>
@@ -512,7 +512,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(16,185,129,.15)" aria-hidden="true">🌍</div>
         <div class="bbody">
-          <h4>CO₂-Einsparung</h4>
+          <h3>CO₂-Einsparung</h3>
           <p>Vermiedene Emissionen durch solaren Eigenverbrauch.</p>
           <div class="bhi" id="bc-total-co2" style="color:var(--green)">—</div>
           <p style="margin-top:3px">≈ 170 Bäume pro Jahr</p>
@@ -521,7 +521,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(6,182,212,.15)" aria-hidden="true">🔒</div>
         <div class="bbody">
-          <h4>Energieunabhängigkeit</h4>
+          <h3>Energieunabhängigkeit</h3>
           <p>Nahezu vollständige Entkopplung vom Stromnetz.</p>
           <div class="bhi" id="bc-best-autarky" style="color:var(--cyan)">—</div>
           <p style="margin-top:3px">Autarkie-Quote 2025</p>
@@ -530,7 +530,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(139,92,246,.15)" aria-hidden="true">📈</div>
         <div class="bbody">
-          <h4>Immobilien-Wertsteigerung</h4>
+          <h3>Immobilien-Wertsteigerung</h3>
           <p>PV + Speicher erhöhen den Marktwert der Immobilie.</p>
           <div class="bhi" style="color:var(--violet)">+5–10 %</div>
           <p style="margin-top:3px">Typische Wertsteigerung DE</p>
@@ -539,7 +539,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(239,68,68,.15)" aria-hidden="true">⚡</div>
         <div class="bbody">
-          <h4>Preisstabilität</h4>
+          <h3>Preisstabilität</h3>
           <p>Eigenverbrauch ist vom Börsenpreis entkoppelt (Ø +5 %/Jahr DE).</p>
           <div class="bhi" style="color:var(--red)">Gesichert</div>
           <p style="margin-top:3px">Kein Preisrisiko für ~93 %</p>
@@ -548,7 +548,7 @@
       <div class="bcrd">
         <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">🔋</div>
         <div class="bbody">
-          <h4>Blackout-Schutz</h4>
+          <h3>Blackout-Schutz</h3>
           <p>Powerwall versorgt Haushalt auch bei Netzausfall.</p>
           <div class="bhi" style="color:var(--amber)">~18–24 h</div>
           <p style="margin-top:3px">Notstrom-Autonomie</p>
@@ -567,7 +567,7 @@
       </div>
     </div>
     <div class="analysis">
-      <h4>Analyse — Wirtschaftlichkeit</h4>
+      <h3>Analyse — Wirtschaftlichkeit</h3>
       <ul>
         <li><strong>ROI-Berechnung:</strong> Bei Anlagekosten ~15.000 € und Ø 1.245 €/Jahr Ersparnis → Amortisation in ~12 Jahren (ohne Förderungen).</li>
         <li><strong>Steigende Rendite:</strong> Jede 5 %-Strompreiserhöhung erhöht den realen Ertrag des Eigenverbrauchs — die Anlage wird wertvoller.</li>
@@ -633,7 +633,7 @@
     </div>
 
     <div class="analysis">
-      <h4>Analyse — Zukunftsperspektiven</h4>
+      <h3>Analyse — Zukunftsperspektiven</h3>
       <ul>
         <li><strong>Stabiles Plateau:</strong> Die Anlage erzeugt konstant ~10,4 MWh/Jahr — Steigerungen nur durch physische Erweiterung möglich.</li>
         <li><strong>Empfehlung 1 – 2. Powerwall:</strong> Erhöht Autarkie auf ~97–98 % und sichert auch bewölkte Winterperioden vollständig ab.</li>
@@ -676,7 +676,7 @@
       <div class="prog-list" id="prog-climate"></div>
     </div>
     <div class="analysis green">
-      <h4>Klimaanalyse</h4>
+      <h3>Klimaanalyse</h3>
       <ul>
         <li><strong>Wachsende Wirkung:</strong> CO₂-Einsparung stieg von 342 kg (2022) auf 988 kg (2025) — fast dreifache Klimaentlastung durch Systemoptimierung.</li>
         <li><strong>Netzeinspeisung als Bonus:</strong> Die 27 MWh eingespeister Solarstrom verdrängen zusätzlich ca. 10 t CO₂ aus dem deutschen Strommix — nicht in der eigenen Bilanz, aber real.</li>
@@ -714,13 +714,14 @@
       </div>
     </div>
     <div class="analysis" style="margin-top:18px">
-      <h4>Analyse — Jahresvergleich</h4>
+      <h3>Analyse — Jahresvergleich</h3>
       <ul id="cmp-analysis"></ul>
     </div>
   </div>
 
 </main><!-- /content -->
 
+<script src="chart.umd.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 // REACTIVE SETTINGS  (updated by price bar inputs)
@@ -884,7 +885,7 @@ function derive(rows) {
   const scoreComponents = [
     {lbl:'Autarkiegrad',       pct:Math.round(autScr*100),      col:'#10b981', weight:35},
     {lbl:'Netzfreiheit',       pct:Math.round(gridFreeScr*100), col:'#06b6d4', weight:30},
-    {lbl:'Batterie-Resilienz', pct:Math.round(batScr*100),      col:'#8b5cf6', weight:20},
+    {lbl:'Batterie-Resilienz', pct:Math.round(batScr*100),      col:'#a78bfa', weight:20},
     {lbl:'Entwicklungs-Bonus', pct:Math.round(progScr*100),     col:'#f59e0b', weight:15},
   ];
 
@@ -1390,9 +1391,9 @@ function refreshAll(rows) {
   updateROI(d);
   updateCards(d);
   buildComparisonTab(d);
-  // Only build charts for the currently visible tab
+  // Defer chart building to avoid forced reflow after batched DOM writes
   const activePaneId = document.querySelector('.pane.active')?.id ?? 'pane-erzeugung';
-  buildChartsForTab(activePaneId.replace('pane-', ''), d);
+  requestAnimationFrame(() => buildChartsForTab(activePaneId.replace('pane-', ''), d));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1523,7 +1524,7 @@ function showTab(id, btn) {
   document.getElementById('pane-' + id).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected', 'true');
-  if (_derived) buildChartsForTab(id, _derived);
+  if (_derived) requestAnimationFrame(() => buildChartsForTab(id, _derived));
 }
 </script>
 </body>
