@@ -721,7 +721,6 @@
 
 </main><!-- /content -->
 
-<script src="chart.umd.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 // REACTIVE SETTINGS  (updated by price bar inputs)
@@ -731,7 +730,38 @@ let sellPrice   = 8;     // ct/kWh
 let systemCost  = 15000; // €
 let currentRows = null;  // last loaded rows — for re-derive on price change
 let _derived    = null;  // last derived data object
-let builtTabs   = new Set(); // tracks which tabs have had charts initialised
+let builtTabs        = new Set(); // tracks which tabs have had charts initialised
+const _builtDomContent = new Set(); // tracks which tabs have lazy DOM content built
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART.JS LAZY LOADER  — loads chart.js on demand, never blocking render
+// ═══════════════════════════════════════════════════════════════════════════
+let _chartJsLoaded = false;
+const _chartJsCbs  = [];
+function _loadChartJs() {
+  if (document.getElementById('cjs')) return;
+  const s = document.createElement('script');
+  s.id  = 'cjs';
+  s.src = 'chart.umd.min.js';
+  s.onerror = () => {
+    s.onerror = null;
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  };
+  s.onload = () => {
+    Chart.defaults.color       = '#94a3b8';
+    Chart.defaults.borderColor = '#334155';
+    Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+    Chart.defaults.font.size   = 12;
+    _chartJsLoaded = true;
+    _chartJsCbs.splice(0).forEach(cb => cb());
+  };
+  document.head.appendChild(s);
+}
+function _whenChartJs(cb) {
+  if (_chartJsLoaded) { cb(); return; }
+  _chartJsCbs.push(cb);
+  _loadChartJs();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIXED CONSTANTS
@@ -911,12 +941,8 @@ function derive(rows) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CHART.JS DEFAULTS
+// CHART.JS SHARED CONFIG  (Chart.defaults are set inside the lazy loader)
 // ═══════════════════════════════════════════════════════════════════════════
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.borderColor = '#334155';
-Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
-Chart.defaults.font.size = 12;
 const gCfg = {color:'rgba(51,65,85,.5)',drawBorder:false};
 const ttip = {mode:'index',intersect:false};
 const leg  = {position:'top',labels:{boxWidth:11,padding:14}};
@@ -928,7 +954,7 @@ const grad = (r,g,b,n) => Array.from({length:n},(_,i)=>`rgba(${r},${g},${b},${.2
 // ═══════════════════════════════════════════════════════════════════════════
 let CH = {};
 function nukeCharts() {
-  Object.values(CH).forEach(c => { try { c.destroy(); } catch(e){} });
+  if (_chartJsLoaded) Object.values(CH).forEach(c => { try { c.destroy(); } catch(e){} });
   CH = {};
 }
 
@@ -947,7 +973,11 @@ function buildChartsForTab(tabId, d) {
     klima:       _buildKlimaCharts,
     vergleich:   _buildVergleichCharts,
   };
-  if (builders[tabId]) { builders[tabId](d); builtTabs.add(tabId); }
+  if (builders[tabId]) {
+    _whenChartJs(() => {
+      if (!builtTabs.has(tabId)) { builders[tabId](d); builtTabs.add(tabId); }
+    });
+  }
 }
 
 function _buildErzeugungCharts(d) {
@@ -1195,9 +1225,9 @@ function buildMonthlyChart(d, yr) {
 // UPDATE UI
 // ═══════════════════════════════════════════════════════════════════════════
 const de = (n,dec=1) => (+n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-const PCOLS   = ['#f59e0b','#06b6d4','#8b5cf6','#10b981','#f97316','#3b82f6','#ec4899'];
-const PCOLS_A = ['rgba(245,158,11,.15)','rgba(6,182,212,.15)','rgba(139,92,246,.15)',
-                 'rgba(16,185,129,.15)','rgba(249,115,22,.15)','rgba(59,130,246,.15)','rgba(236,72,153,.15)'];
+const PCOLS   = ['#f59e0b','#06b6d4','#a78bfa','#10b981','#f97316','#60a5fa','#f472b6'];
+const PCOLS_A = ['rgba(245,158,11,.15)','rgba(6,182,212,.15)','rgba(167,139,250,.15)',
+                 'rgba(16,185,129,.15)','rgba(249,115,22,.15)','rgba(96,165,250,.15)','rgba(244,114,182,.15)'];
 
 function updateKPIs(d) {
   document.getElementById('kpi-solar').textContent    = de(d.totalSolar) + ' MWh';
@@ -1375,6 +1405,11 @@ function updateCards(d) {
 // ═══════════════════════════════════════════════════════════════════════════
 // FULL REFRESH
 // ═══════════════════════════════════════════════════════════════════════════
+function _buildLazyTabContent(id, d) {
+  if (id === 'vergleich') buildComparisonTab(d);
+  if (id === 'zukunft')   updateTable(d);
+}
+
 function refreshAll(rows) {
   currentRows = rows;
   _derived = null;
@@ -1384,14 +1419,15 @@ function refreshAll(rows) {
   builtTabs.clear();
   updateKPIs(d);
   updateProgressBars(d);
-  updateTable(d);
   updateImpact(d);
   updateEVQ(d);
   updateScore(d);
   updateROI(d);
   updateCards(d);
-  buildComparisonTab(d);
-  // Defer chart building to avoid forced reflow after batched DOM writes
+  // Rebuild content for any lazy tabs already visited
+  _builtDomContent.forEach(id => _buildLazyTabContent(id, d));
+  // Preload chart.js in background while browser renders first frame
+  _loadChartJs();
   const activePaneId = document.querySelector('.pane.active')?.id ?? 'pane-erzeugung';
   requestAnimationFrame(() => buildChartsForTab(activePaneId.replace('pane-', ''), d));
 }
@@ -1524,7 +1560,13 @@ function showTab(id, btn) {
   document.getElementById('pane-' + id).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected', 'true');
-  if (_derived) requestAnimationFrame(() => buildChartsForTab(id, _derived));
+  if (_derived) {
+    if (!_builtDomContent.has(id)) {
+      _buildLazyTabContent(id, _derived);
+      _builtDomContent.add(id);
+    }
+    requestAnimationFrame(() => buildChartsForTab(id, _derived));
+  }
 }
 </script>
 </body>
