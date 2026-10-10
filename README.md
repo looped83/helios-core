@@ -1,65 +1,56 @@
 # Helios Core
 
-A modern photovoltaic analytics dashboard for monitoring solar energy production, consumption, efficiency, and smart energy insights.
+A lightweight photovoltaic analytics dashboard for solar production, consumption, battery storage, grid exchange, economics and climate impact.
 
 ## Overview
 
-Helios Core is a lightweight and responsive solar monitoring dashboard designed for photovoltaic systems. It provides real-time analytics, energy flow visualization, and performance monitoring for residential or commercial solar installations.
-
-The dashboard focuses on delivering a clean, modern, and data-centric experience for tracking solar production and optimizing energy usage.
+Helios Core is a single, dependency-free HTML file. It works offline, loads in one request and renders all charts as inline SVG — no framework, no chart library, no build step.
 
 ---
 
 ## Features
 
-* ⚡ Solar production analytics
-* 🔋 Battery storage overview
-* 🏠 Household energy consumption tracking
-* 🌍 Grid import/export visualization
-* 📈 Historical energy performance charts
-* 🌙 Modern dark-mode inspired interface
-* 📱 Fully responsive dashboard layout
+* ☀️ **Erzeugung** – annual yield, use of production (self-consumption vs. feed-in), monthly profile
+* 🏠 **Verbrauch** – coverage by solar, Powerwall and grid; autarky and self-consumption rate; grid-independence score
+* 🔋 **Speicher & Netz** – Powerwall discharge, grid exchange and net balance
+* 💶 **Finanzen** – annual savings, amortisation path against system cost, further benefits
+* 🌱 **Klima** – avoided CO₂ with equivalents, cumulative impact including forecast
+* 📈 **Trends & Prognose** – forecast to 2030, year-over-year change, full annual table
+
+Across all views:
+
+* Partial years (commissioning year, running year) are detected and marked; they are excluded from records, averages, year-over-year deltas and the forecast base
+* Every figure and every analysis text is computed from the data — nothing is hard-coded
+* Adjustable assumptions (electricity price, feed-in tariff, system cost), stored locally
+* CSV upload via button or drag & drop, persisted locally, with one-click reset to sample data
+* Deep links per view (`#finanzen`), keyboard-navigable tabs and charts, accessible chart descriptions
+* Mobile-first layout with sticky navigation and no horizontal scrolling
 
 ---
 
-## Dashboard Highlights
+## CSV format
 
-### Energy Overview
+Use the Tesla app export or any CSV with these columns (see [`data.csv`](data.csv)):
 
-Track all important energy metrics in one place:
+| Column contains | Meaning |
+|---|---|
+| first column | date (`2025-01-01T…` or `01.01.2025`) |
+| `Home` | household consumption |
+| `Powerwall` | energy from battery |
+| `Solar` | solar production |
+| `From Grid` | grid import |
+| `To Grid` | grid feed-in |
 
-* Current solar production
-* Total generated energy
-* Self-consumption rate
-* Grid feed-in
-* Battery charging status
-* Energy independence ratio
-
-### Analytics & Insights
-
-Analyze performance and efficiency through:
-
-* Solar yield trends
-* Historical comparisons
-* Efficiency monitoring
+Rows can be annual or monthly. Units are read from the header (`kWh` or `MWh`). Comma- and semicolon-separated files are supported, including German decimal commas.
 
 ---
 
 ## Tech Stack
 
-Built using modern web technologies:
-
-* HTML5
-* CSS3
-* JavaScript (ES6+)
-* Chart.js
+* HTML5, CSS3 (custom properties, CSS Grid)
+* Vanilla JavaScript (ES2022)
+* Inline SVG charts and icon sprite
 * GitHub Pages
-
-Future integrations may include:
-
-* Inverter APIs
-* Smart meter integrations
-* Weather APIs
 
 ---
 
@@ -71,12 +62,9 @@ Future integrations may include:
 
 ## Roadmap
 
-Planned features:
-
 * [ ] Smart home integrations
 * [ ] Weather forecasting
 * [ ] AI-powered energy optimization
-* [ ] Energy cost analysis
 * [ ] Push notifications
 * [ ] Mobile app integration
 * [ ] Advanced battery analytics
@@ -87,7 +75,7 @@ Planned features:
 
 This project is intended for educational and informational purposes only.
 
-Actual solar production values may vary depending on weather conditions, hardware configuration, and data source accuracy.
+Actual solar production values may vary depending on weather conditions, hardware configuration, and data source accuracy. Economic figures are estimates without subsidies or taxes.
 
 ---
 

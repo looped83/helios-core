@@ -1,1573 +1,1185 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Helios Core – Photovoltaik-Dashboard für Solarenergie, Tesla Powerwall und Netzeinspeisung. Jahres- und Monatsauswertung 2022–2026 mit Echtzeit-Wirtschaftlichkeitsanalyse.">
-  <title>Helios Core</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{
-      --bg:#0f172a;--surface:#1e293b;--surface2:#263449;--border:#334155;
-      --text:#e2e8f0;--muted:#94a3b8;
-      --amber:#f59e0b;--amber2:#fcd34d;--amber3:#d97706;
-      --cyan:#06b6d4;--green:#10b981;--violet:#a78bfa;
-      --red:#f87171;--rose:#f43f5e;--blue:#3b82f6;--orange:#f97316;
-    }
-    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Helios Core – Photovoltaik-Dashboard für Erzeugung, Verbrauch, Powerwall, Netzeinspeisung, Wirtschaftlichkeit und Klimawirkung.">
+<meta name="theme-color" content="#0f172a">
+<meta name="color-scheme" content="dark">
+<title>Helios Core</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E">
+<style>
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme:dark;
+  --bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--line:#334155;--grid:#2b3a50;
+  --text:#e2e8f0;--text-2:#cbd5e1;--muted:#94a3b8;
+  --accent:#f59e0b;--accent-ink:#0f172a;
+  /* one colour per metric – validated for CVD separation on --surface */
+  --c-solar:#d37b0d;--c-self:#2cab70;--c-feed:#2a9bcb;--c-bat:#a353ba;--c-grid:#ce3e54;--c-money:#cd6199;--c-home:#94a3b8;
+  /* status – deltas and score only, always paired with arrow/label */
+  --pos:#4ade80;--neg:#fb7185;--warn:#fbbf24;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;
+  --r-sm:8px;--r:12px;
+  --fs-xs:11px;--fs-s:12px;--fs-m:14px;--fs-l:16px;--fs-xl:22px;--fs-2xl:28px;
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --gut:16px;--maxw:1280px;
+}
+@media(min-width:768px){:root{--gut:32px}}
+.m-solar{--m:var(--c-solar)}.m-self,.m-co2{--m:var(--c-self)}.m-feed{--m:var(--c-feed)}
+.m-bat{--m:var(--c-bat)}.m-grid{--m:var(--c-grid)}.m-money{--m:var(--c-money)}.m-home{--m:var(--c-home)}
+.st-pos{--st:var(--pos)}.st-warn{--st:var(--warn)}.st-neg{--st:var(--neg)}
 
-    /* ── Header ── */
-    .hdr{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:1px solid var(--border);
-      padding:18px 32px;display:flex;align-items:center;gap:16px}
-    .hdr-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--amber),var(--amber3));
-      border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
-    .hdr-title h1{font-size:22px;font-weight:700}
-    .hdr-title p{color:var(--muted);font-size:12px;margin-top:2px}
-    .hdr-badge{margin-left:auto;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);
-      color:var(--amber);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{min-height:100vh;background:var(--bg);color:var(--text);font:var(--fs-m)/1.45 var(--font);-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.band{padding-inline:max(var(--gut),calc((100% - var(--maxw))/2))}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:fixed;top:var(--s3);left:var(--s3);z-index:100;padding:var(--s2) var(--s4);border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);font-weight:700;text-decoration:none;transform:translateY(-200%)}
+.skip:focus{transform:none}
 
-    /* ── KPI Bar ── */
-    .kpi-bar{background:var(--surface);border-bottom:1px solid var(--border);
-      padding:14px 32px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
-    .kpi{text-align:center}
-    .kpi-v{font-size:20px;font-weight:700;color:var(--amber);line-height:1}
-    .kpi-l{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
-    .kpi:nth-child(2) .kpi-v{color:var(--cyan)}
-    .kpi:nth-child(3) .kpi-v{color:var(--green)}
-    .kpi:nth-child(4) .kpi-v{color:var(--violet)}
-    .kpi:nth-child(5) .kpi-v{color:var(--rose)}
+/* ── Controls ───────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-width:40px;height:40px;padding:0 var(--s3);border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);font-size:var(--fs-s);font-weight:600;white-space:nowrap;cursor:pointer;transition:background-color .15s,border-color .15s,color .15s}
+.btn:hover{background:var(--surface-2)}
+.btn:has(:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-expanded=true]{border-color:var(--accent);color:var(--accent)}
+.btn.ghost{border-color:transparent;background:none}
+.link{border:0;background:none;color:var(--accent);font-size:var(--fs-s);font-weight:600;cursor:pointer}
+.link:hover{text-decoration:underline}
+.sel{height:32px;padding:0 var(--s2);border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg);font-size:var(--fs-s);cursor:pointer}
+@media(max-width:640px){.btn .lbl{display:none}.top .btn{padding:0}}
 
-    /* ── Tabs ── */
-    .tabs{background:var(--surface);border-bottom:1px solid var(--border);
-      padding:0 32px;display:flex;overflow-x:auto;gap:0}
-    .tabs::-webkit-scrollbar{height:3px}
-    .tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-    .tab-btn{background:none;border:none;color:var(--muted);padding:13px 18px;font-size:13px;
-      font-weight:500;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
-      transition:all .2s;display:flex;align-items:center;gap:7px}
-    .tab-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
-    .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.top{display:flex;align-items:center;gap:var(--s3);padding-block:var(--s3)}
+.logo{width:36px;height:36px;padding:7px;border-radius:10px;background:var(--accent);color:var(--accent-ink);stroke-width:2.2}
+.brand{flex:1;min-width:0}
+.brand h1{font-size:var(--fs-l);line-height:1.25}
+.brand p{overflow:hidden;color:var(--muted);font-size:var(--fs-s);white-space:nowrap;text-overflow:ellipsis}
 
-    /* ── Content ── */
-    .content{padding:24px 32px;max-width:1400px;margin:0 auto}
-    .pane{display:none}.pane.active{display:block}
+/* ── KPI strip ──────────────────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s3);padding-block:var(--s3) var(--s4)}
+.kpis .stat{background:none;border:0;padding:0;border-left:1px solid var(--line);padding-left:var(--s3);border-radius:0}
+.kpis .stat:first-child{border-left:0;padding-left:0}
+.kpis .stat-v{font-size:var(--fs-l)}
+@media(max-width:767px){
+  .kpis{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gut);scrollbar-width:none}
+  .kpis::-webkit-scrollbar{display:none}
+  .kpis .stat{flex:0 0 40%;scroll-snap-align:start}
+}
 
-    .sec-hdr{margin-bottom:22px}
-    .sec-hdr h2{font-size:19px;font-weight:700}
-    .sec-hdr p{color:var(--muted);font-size:12px;margin-top:3px}
+/* ── Dock: settings + tabs (sticky) ─────────────────────────────────────── */
+.dock{position:sticky;top:0;z-index:10;background:var(--bg);border-block:1px solid var(--line)}
+.settings{max-height:60vh;overflow-y:auto;padding-block:var(--s4);border-bottom:1px solid var(--line);background:var(--surface)}
+.settings-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s3)}
+.settings-h h2{font-size:var(--fs-m)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));align-items:end;gap:var(--s3)}
+.field{display:grid;gap:var(--s1);min-width:0;font-size:var(--fs-s);color:var(--text-2)}
+.input{display:flex;align-items:center;min-width:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg);transition:border-color .15s}
+.input:focus-within{border-color:var(--accent)}
+.input:has([aria-invalid=true]){border-color:var(--neg)}
+.input input{flex:1;min-width:0;height:40px;padding:0 var(--s2) 0 var(--s3);border:0;background:none;font-weight:600;outline:none;-moz-appearance:textfield}
+.input input::-webkit-inner-spin-button,.input input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.input span{padding-right:var(--s2);color:var(--muted);font-size:var(--fs-s)}
+.field small{display:none;color:var(--neg);font-size:var(--fs-xs)}
+.field:has([aria-invalid=true]) small{display:block}
+.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);margin-top:var(--s4);color:var(--muted);font-size:var(--fs-s)}
+.data-row b{color:var(--text)}
+.data-row a{color:var(--accent)}
+@media(pointer:coarse){.dnd{display:none}}
 
-    /* ── Stat Cards ── */
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:14px;margin-bottom:22px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
-    .card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
-    .card-val{font-size:26px;font-weight:700;color:var(--amber);line-height:1}
-    .card-sub{font-size:11px;color:var(--muted);margin-top:5px}
-    .badge-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;
-      padding:2px 8px;border-radius:10px;margin-top:7px}
-    .t-up{background:rgba(16,185,129,.15);color:var(--green)}
-    .t-dn{background:rgba(248,113,113,.15);color:var(--red)}
-    .t-eq{background:rgba(148,163,184,.15);color:var(--muted)}
+[role=tablist]{display:flex;gap:var(--s1);overflow-x:auto;scrollbar-width:none}
+[role=tablist]::-webkit-scrollbar{display:none}
+[role=tab]{display:flex;align-items:center;gap:var(--s2);height:48px;padding:0 var(--s3);border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);font-weight:500;white-space:nowrap;cursor:pointer;transition:color .15s,border-color .15s}
+[role=tab]:hover{color:var(--text)}
+[role=tab][aria-selected=true]{border-bottom-color:var(--accent);color:var(--text)}
+[role=tab][aria-selected=true] .i{color:var(--accent)}
+[role=tab]:focus-visible{outline-offset:-2px}
+@media(max-width:640px){
+  .tabs{padding-inline:var(--s1)}
+  [role=tablist]{display:grid;grid-template-columns:repeat(6,1fr);gap:0}
+  [role=tab]{flex-direction:column;justify-content:center;gap:2px;height:56px;padding:0 2px;font-size:var(--fs-xs)}
+  .lg{display:none}
+}
 
-    /* ── Chart Grid ── */
-    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
-    .cgrid.full{grid-template-columns:1fr}
-    .ccrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px}
-    .ctitle{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)}
-    .ctitle span{color:var(--muted);font-weight:400;font-size:11px;margin-left:6px}
-    .cbox{position:relative;height:250px}
-    .cbox.tall{height:280px}
-    .cbox.sm{height:190px}
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+main{padding-block:var(--s4) var(--s6);outline:none}
+.view{display:grid;gap:var(--s4)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:var(--s4)}
+.card{min-width:0;padding:var(--s4);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.card h3{font-size:var(--fs-m);font-weight:600}
+.note{margin-top:var(--s3);color:var(--muted);font-size:var(--fs-xs)}
+.empty{display:grid;place-items:center;height:100%;color:var(--muted);font-size:var(--fs-s);text-align:center}
 
-    /* ── Analysis ── */
-    .analysis{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);
-      border-radius:8px;padding:14px 18px;margin-top:4px}
-    .analysis h3{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:9px;text-transform:uppercase;letter-spacing:.5px}
-    .analysis ul{list-style:none;display:flex;flex-direction:column;gap:6px}
-    .analysis li{font-size:12px;color:var(--muted);padding-left:14px;position:relative;line-height:1.5}
-    .analysis li::before{content:'→';position:absolute;left:0;color:var(--amber)}
-    .analysis li strong{color:var(--text)}
-    .analysis.green{border-left-color:var(--green)}
-    .analysis.green h3{color:var(--green)}
-    .analysis.green li::before{color:var(--green)}
+/* ── Stat ───────────────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{min-width:0;padding:var(--s3) var(--s4);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.stat-l{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--fs-s)}
+.stat-l::before{content:'';flex:none;width:8px;height:8px;border-radius:50%;background:var(--m)}
+.eyebrow{color:var(--muted);font-size:var(--fs-s)}
+.stat-v{margin-top:var(--s1);font-size:var(--fs-xl);font-weight:700;line-height:1.2}
+.stat-v small{margin-left:4px;color:var(--muted);font-size:var(--fs-s);font-weight:600}
+.stat-s{margin-top:2px;color:var(--muted);font-size:var(--fs-s)}
+.delta{display:inline-block;margin-top:var(--s2);padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--st,var(--muted)) 14%,transparent);color:var(--st,var(--muted));font-size:var(--fs-xs);font-weight:600}
+.delta span{margin-left:2px;font-weight:400;opacity:.85}
+@media(max-width:400px){.stat{padding:var(--s3)}.stat-v{font-size:var(--fs-l)}}
 
-    /* ── Progress Bars ── */
-    .prog-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
-    .prog-item{display:flex;flex-direction:column;gap:4px}
-    .prog-hdr{display:flex;justify-content:space-between;font-size:12px}
-    .prog-lbl{color:var(--text)}.prog-val{color:var(--muted);font-weight:600}
-    .prog-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
-    .prog-fill{height:100%;border-radius:4px;transition:width .8s ease}
+/* ── Meter & score ──────────────────────────────────────────────────────── */
+.score{display:flex;align-items:center;gap:var(--s5)}
+.ring{position:relative;flex:none;width:96px}
+.ring svg{display:block;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .tr{stroke:var(--surface-2)}
+.ring .vl{stroke:var(--st);stroke-linecap:round;stroke-dasharray:calc(263.9px * var(--p)) 999px}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:var(--fs-2xl)}
+.score-body{flex:1;min-width:0}
+.score-r{margin:2px 0 var(--s3);font-size:var(--fs-l);font-weight:700}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:var(--s3) var(--s5)}
+.meter{display:grid;grid-template-columns:1fr auto;gap:4px var(--s2);font-size:var(--fs-s)}
+.meter span{color:var(--text-2)}
+.meter small{color:var(--muted)}
+.meter i{grid-column:1/-1;height:6px;overflow:hidden;border-radius:3px;background:var(--surface-2)}
+.meter i::after{content:'';display:block;height:100%;background:var(--m);transform:scaleX(var(--v));transform-origin:left}
+@media(max-width:400px){.score{gap:var(--s4)}.ring{width:80px}}
 
-    /* ── Impact Cards ── */
-    .impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
-    .icrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-      padding:22px;text-align:center}
-    .icrd-icon{font-size:36px;margin-bottom:10px}
-    .icrd-val{font-size:28px;font-weight:700;color:var(--green);line-height:1}
-    .icrd-lbl{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+/* ── Lists ──────────────────────────────────────────────────────────────── */
+.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--s3) var(--s5);margin-top:var(--s3);list-style:none}
+.list li{display:grid;grid-template-columns:auto 1fr;gap:2px var(--s3);color:var(--text-2);font-size:var(--fs-s)}
+.list .i{grid-row:span 2;width:20px;height:20px;color:var(--accent)}
+.list b{color:var(--text)}
+.insights summary{display:flex;align-items:center;gap:var(--s2);font-weight:600;list-style:none;cursor:pointer}
+.insights summary::-webkit-details-marker{display:none}
+.insights summary small{color:var(--muted);font-weight:400}
+.insights summary .i{margin-left:auto;transition:transform .2s}
+.insights[open] summary .i{transform:rotate(180deg)}
+.insights ul{display:grid;gap:var(--s2);margin-top:var(--s3);padding-left:var(--s4)}
+.insights li{color:var(--text-2);font-size:var(--fs-s);line-height:1.55}
+.insights li::marker{color:var(--accent)}
+.insights strong{color:var(--text)}
 
-    /* ── Benefit Cards ── */
-    .benefit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px}
-    .bcrd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-      padding:18px;display:flex;gap:14px;align-items:flex-start}
-    .bicn{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;
-      justify-content:center;font-size:20px;flex-shrink:0}
-    .bbody h3{font-size:13px;font-weight:600;margin-bottom:3px}
-    .bbody p{font-size:11px;color:var(--muted);line-height:1.5}
-    .bhi{font-size:18px;font-weight:700;margin-top:3px}
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.tbl-wrap{margin-top:var(--s3);overflow-x:auto}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-s);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th,.tbl td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--line);text-align:right}
+.tbl th{color:var(--muted);font-size:var(--fs-xs);font-weight:600;vertical-align:bottom}
+.tbl th small{display:block;font-weight:400}
+.tbl td{color:var(--text-2)}
+.tbl :is(th,td):first-child{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left}
+.tbl td:first-child{color:var(--text);font-weight:600}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .best{color:var(--text);font-weight:700}
+.tbl .fc td:not(:first-child){color:var(--muted)}
+.tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:10px;font-weight:600;vertical-align:1px}
 
-    /* ── Forecast Table ── */
-    .ftbl{width:100%;border-collapse:collapse;font-size:12px}
-    .ftbl th{background:var(--surface2);padding:9px 14px;text-align:left;font-weight:600;
-      color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
-    .ftbl td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
-    .ftbl tr:last-child td{border-bottom:none}
-    .ftbl tr:hover td{background:rgba(255,255,255,.02)}
-    .bgt{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
-    .bgt-ist{background:rgba(245,158,11,.15);color:var(--amber)}
-    .bgt-pro{background:rgba(6,182,212,.15);color:var(--cyan)}
+/* ── Chart ──────────────────────────────────────────────────────────────── */
+.chart figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1) var(--s2);min-height:32px}
+.chart .unit{color:var(--muted);font-size:var(--fs-s)}
+.act{margin-left:auto}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s3);margin-top:var(--s2);color:var(--text-2);font-size:var(--fs-s);list-style:none}
+.legend:empty{display:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.sw{flex:none;width:10px;height:10px;border-radius:3px;background:var(--m)}
+.sw.pt{opacity:.45}
+.sw.md{border:1.5px dashed var(--m);background:color-mix(in srgb,var(--m) 15%,transparent)}
+.sw.ln{width:14px;height:2px;border-radius:1px}
+.sw.ln.md{height:0;border-width:2px 0 0;background:none}
+.sw.dot{border:2px solid var(--m);border-radius:50%;background:none}
+.plot{position:relative;height:220px;margin-top:var(--s3);border-radius:4px;outline-offset:4px;touch-action:pan-y}
+@media(min-width:768px){.plot{height:250px}}
+.plot svg{display:block;overflow:visible}
+.ax{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.gl{stroke:var(--grid);shape-rendering:crispEdges}
+.bl{stroke:var(--line);shape-rendering:crispEdges}
+.hov{fill:var(--text);fill-opacity:.05}
+.b{fill:var(--m)}
+.b.pt{fill-opacity:.45}
+.b.md{fill-opacity:.15;stroke:var(--m);stroke-width:1.5;stroke-dasharray:3 3}
+.ln{fill:none;stroke:var(--m);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ln.md{stroke-dasharray:5 4}
+.ar{fill:var(--m);fill-opacity:.1}
+.pt-m{fill:var(--m);stroke:var(--surface);stroke-width:2}
+.pt-m.o{fill:var(--surface);stroke:var(--m)}
+.ref{stroke:var(--text-2);stroke-dasharray:4 3;shape-rendering:crispEdges}
+.ref-l{fill:var(--text-2);font-size:11px}
+.tip{position:absolute;top:0;left:0;z-index:2;min-width:150px;padding:var(--s2) var(--s3);border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);box-shadow:0 8px 24px rgb(0 0 0/.35);font-size:var(--fs-s);pointer-events:none}
+.tip p{margin-bottom:4px;font-weight:600}
+.tip ul{display:grid;gap:2px;list-style:none}
+.tip li{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.tip li b{margin-left:auto;padding-left:var(--s3);color:var(--text);font-variant-numeric:tabular-nums}
+.tip .sum{margin-top:2px;padding-top:4px;border-top:1px solid var(--line)}
 
-    /* ── Upload Button ── */
-    .upload-btn{background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
-      color:var(--cyan);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;
-      cursor:pointer;white-space:nowrap;margin-left:8px;transition:background .2s;user-select:none;
-      display:inline-flex;align-items:center;gap:6px}
-    .upload-btn:hover{background:rgba(6,182,212,.28)}
-
-    /* ── Toast ── */
-    .toast{position:fixed;bottom:24px;right:24px;background:rgba(16,185,129,.95);color:#fff;
-      padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;
-      opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;
-      pointer-events:none;max-width:340px}
-    .toast.show{opacity:1;transform:translateY(0)}
-    .toast.err{background:rgba(239,68,68,.95)}
-
-    /* ── Drag overlay ── */
-    body.drag-over::after{content:'CSV hier ablegen';position:fixed;inset:0;
-      background:rgba(6,182,212,.15);border:3px dashed var(--cyan);z-index:8888;
-      display:flex;align-items:center;justify-content:center;font-size:28px;
-      font-weight:700;color:var(--cyan);pointer-events:none}
-
-    /* ── Price Bar ── */
-    .price-bar{background:#111827;border-bottom:1px solid var(--border);
-      padding:9px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-    .pi{display:flex;align-items:center;gap:7px;font-size:12px}
-    .pi label{color:var(--muted);white-space:nowrap}
-    .pi-wrap{display:flex;align-items:center;gap:4px}
-    .pi-wrap input[type=number]{width:68px;background:var(--surface2);border:1px solid var(--border);
-      border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-weight:600;
-      text-align:center;outline:none;-moz-appearance:textfield}
-    .pi-wrap input[type=number]::-webkit-inner-spin-button{opacity:.4}
-    .pi-wrap input[type=number]:focus{border-color:var(--amber)}
-    .pi-wrap span{color:var(--muted);font-size:11px}
-    .pi-sep{width:1px;height:22px;background:var(--border);margin:0 2px}
-    .price-hint{color:var(--muted);font-size:11px;margin-left:auto;font-style:italic}
-
-    /* ── Score Widget ── */
-    .score-wrap{display:flex;align-items:center;gap:20px;padding:16px;
-      background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:22px}
-    .score-svg-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
-    .score-svg{width:100px;height:100px}
-    .score-num-big{font-size:40px;font-weight:800;line-height:1;text-align:center}
-    .score-denom{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center}
-    .score-info{flex:1;min-width:0}
-    .score-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-    .score-rating{font-size:14px;font-weight:700;margin-bottom:10px}
-    .score-comp{display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:5px}
-    .score-comp-lbl{color:var(--muted);width:130px;flex-shrink:0;white-space:nowrap}
-    .score-comp-bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
-    .score-comp-fill{height:100%;border-radius:3px;transition:width .7s ease}
-    .score-comp-val{font-weight:600;width:32px;text-align:right}
-
-    /* ── Month selector ── */
-    .month-sel-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
-    .month-sel-wrap label{color:var(--muted)}
-    .month-sel-wrap select{background:var(--surface2);border:1px solid var(--border);
-      border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;cursor:pointer;outline:none}
-    .month-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;
-      background:rgba(6,182,212,.15);color:var(--cyan);margin-left:8px;vertical-align:middle}
-
-    /* ── EVQ ── */
-    .evq-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-    .evq-crd{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-      padding:16px;text-align:center}
-    .evq-pct{font-size:30px;font-weight:700;line-height:1}
-    .evq-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
-
-    /* ── ROI Box ── */
-    .roi-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-      padding:18px;margin-top:18px}
-    .roi-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
-    .roi-lbl{color:var(--muted)}.roi-val{font-weight:600;color:var(--text)}
-
-    /* ── Jahresvergleich ── */
-    .cmp-tbl{width:100%;border-collapse:collapse;font-size:12px}
-    .cmp-tbl th{background:var(--surface2);padding:8px 12px;font-weight:600;font-size:10px;
-      text-transform:uppercase;letter-spacing:.5px;text-align:center;color:var(--muted)}
-    .cmp-tbl th:first-child{text-align:left}
-    .cmp-tbl td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:center}
-    .cmp-tbl td:first-child{text-align:left;font-size:11px;color:var(--muted);font-weight:500}
-    .cmp-tbl tr:last-child td{border-bottom:none}
-    .cmp-tbl tr:hover td{background:rgba(255,255,255,.02)}
-    .cmp-best{font-weight:700}
-    .delta-up{color:var(--green);font-size:10px}
-    .delta-dn{color:var(--red);font-size:10px}
-    .delta-eq{color:var(--muted);font-size:10px}
-
-    /* ── Skip Navigation ── */
-    .skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
-    .skip-nav:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;
-      background:var(--amber);color:#000;padding:8px 18px;border-radius:6px;z-index:99999;
-      font-weight:700;font-size:14px;text-decoration:none}
-
-    /* ── Focus Visible ── */
-    :focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:3px}
-    .tab-btn:focus-visible{outline-offset:-2px}
-    .pi-wrap input[type=number]:focus-visible{outline:2px solid var(--amber);outline-offset:0}
-
-    /* ── Responsive ── */
-    @media(max-width:768px){
-      .kpi-bar{grid-template-columns:repeat(3,1fr)}
-      .cgrid{grid-template-columns:1fr}
-      .impact-grid{grid-template-columns:1fr 1fr}
-      .benefit-grid{grid-template-columns:1fr}
-      .content{padding:14px 16px}
-      .hdr{padding:14px 16px}
-      .tabs{padding:0 16px}
-    }
-  </style>
+/* ── Feedback ───────────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:var(--s4);left:50%;z-index:50;max-width:calc(100% - 2 * var(--s4));padding:var(--s2) var(--s4);border:1px solid var(--line);border-left:3px solid var(--pos);border-radius:var(--r-sm);background:var(--surface-2);font-size:var(--fs-s);opacity:0;transform:translate(-50%,8px);pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{border-left-color:var(--neg)}
+body.dragging::after{content:'CSV hier ablegen';position:fixed;inset:var(--s3);z-index:60;display:grid;place-items:center;border:2px dashed var(--accent);border-radius:var(--r);background:color-mix(in srgb,var(--bg) 88%,transparent);color:var(--accent);font-size:var(--fs-xl);font-weight:700;pointer-events:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+</style>
 </head>
 <body>
-<a class="skip-nav" href="#main-content">Zum Hauptinhalt springen</a>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5M5 9v12h14V9M10 21v-6h4v6"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M11 9.5 8.5 12h4L10 14.5"/></symbol>
+  <symbol id="i-euro" viewBox="0 0 24 24"><path d="M18 6.6A7 7 0 1 0 18 17.4M4 10h10M4 14h10"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 20c0-9 5.5-14.5 15-16 0 10-5.5 16-15 16ZM5 20l7-7"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></symbol>
+</svg>
+<a class="skip" href="#main">Zum Inhalt springen</a>
 
-<!-- ── Header ────────────────────────────────────────── -->
-<header class="hdr">
-  <div class="hdr-icon" aria-hidden="true">☀️</div>
-  <div class="hdr-title">
+<header class="top band">
+  <svg class="i logo" aria-hidden="true"><use href="#i-sun"/></svg>
+  <div class="brand">
     <h1>Helios Core</h1>
-    <p>Photovoltaik · Tesla Powerwall · Netzeinspeisung · Analyse 2022 – 2026</p>
+    <p id="meta">Photovoltaik-Analyse</p>
   </div>
-  <div class="hdr-badge" id="hdr-badge" aria-live="polite">Datenbasis: 2022 – 2026</div>
-  <label class="upload-btn" title="Neue CSV laden — auch per Drag &amp; Drop auf die Seite">
-    <span aria-hidden="true">📂</span> CSV laden
-    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" aria-label="CSV-Datei auswählen">
+  <button class="btn" id="btn-settings" aria-expanded="false" aria-controls="settings" aria-label="Annahmen">
+    <svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg><span class="lbl">Annahmen</span>
+  </button>
+  <label class="btn">
+    <svg class="i" aria-hidden="true"><use href="#i-upload"/></svg><span class="lbl">CSV laden</span>
+    <input type="file" class="sr-only" data-csv accept=".csv,text/csv" aria-label="CSV-Datei laden">
   </label>
 </header>
-<div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<!-- ── Global KPI Bar ────────────────────────────────── -->
-<div class="kpi-bar">
-  <div class="kpi"><div class="kpi-v" id="kpi-solar">—</div><div class="kpi-l">Solar gesamt</div></div>
-  <div class="kpi"><div class="kpi-v" id="kpi-best">—</div><div class="kpi-l">Jahres-Bestleistung</div></div>
-  <div class="kpi"><div class="kpi-v" id="kpi-savings">—</div><div class="kpi-l">Ersparnisse kumuliert</div></div>
-  <div class="kpi"><div class="kpi-v" id="kpi-autarky">—</div><div class="kpi-l">Autarkie-Rekord</div></div>
-  <div class="kpi"><div class="kpi-v" id="kpi-co2">—</div><div class="kpi-l">CO₂ eingespart</div></div>
+<section class="kpis band" id="kpis" aria-label="Kennzahlen"></section>
+
+<div class="dock" id="dock">
+  <section class="settings band" id="settings" aria-labelledby="settings-h" hidden>
+    <div class="settings-h">
+      <h2 id="settings-h">Annahmen</h2>
+      <button class="btn ghost" data-close aria-label="Annahmen schließen"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="fields">
+      <label class="field">Strompreis
+        <span class="input"><input id="in-buy" type="number" inputmode="decimal" min="1" max="150" step="0.5"><span>ct/kWh</span></span>
+        <small>Erlaubt: 1–150 ct</small>
+      </label>
+      <label class="field">Einspeisevergütung
+        <span class="input"><input id="in-sell" type="number" inputmode="decimal" min="0" max="50" step="0.1"><span>ct/kWh</span></span>
+        <small>Erlaubt: 0–50 ct</small>
+      </label>
+      <label class="field">Anlagekosten
+        <span class="input"><input id="in-cost" type="number" inputmode="numeric" min="1000" max="200000" step="500"><span>€</span></span>
+        <small>Erlaubt: 1.000–200.000 €</small>
+      </label>
+    </div>
+    <div class="data-row">
+      <span>Daten: <b id="src">Beispieldaten</b></span>
+      <button class="btn" id="btn-reset" hidden><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg>Beispieldaten</button>
+      <label class="btn"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>CSV laden<input type="file" class="sr-only" data-csv accept=".csv,text/csv"></label>
+      <span><span class="dnd">oder per Drag &amp; Drop · </span>Format: <a href="data.csv" download>Beispiel-CSV</a></span>
+    </div>
+  </section>
+
+  <nav class="tabs band" aria-label="Bereiche">
+    <div role="tablist" id="tablist">
+      <button role="tab" id="t-erzeugung" data-view="erzeugung" aria-controls="p-erzeugung"><svg class="i" aria-hidden="true"><use href="#i-sun"/></svg><span>Erzeugung</span></button>
+      <button role="tab" id="t-verbrauch" data-view="verbrauch" aria-controls="p-verbrauch"><svg class="i" aria-hidden="true"><use href="#i-home"/></svg><span>Verbrauch</span></button>
+      <button role="tab" id="t-speicher" data-view="speicher" aria-controls="p-speicher"><svg class="i" aria-hidden="true"><use href="#i-battery"/></svg><span>Speicher<span class="lg"> &amp; Netz</span></span></button>
+      <button role="tab" id="t-finanzen" data-view="finanzen" aria-controls="p-finanzen"><svg class="i" aria-hidden="true"><use href="#i-euro"/></svg><span>Finanzen</span></button>
+      <button role="tab" id="t-klima" data-view="klima" aria-controls="p-klima"><svg class="i" aria-hidden="true"><use href="#i-leaf"/></svg><span>Klima</span></button>
+      <button role="tab" id="t-trends" data-view="trends" aria-controls="p-trends"><svg class="i" aria-hidden="true"><use href="#i-trend"/></svg><span>Trends<span class="lg"> &amp; Prognose</span></span></button>
+    </div>
+  </nav>
 </div>
 
-<!-- ── Price Settings Bar ────────────────────────────── -->
-<div class="price-bar">
-  <div class="pi">
-    <label for="inp-buy"><span aria-hidden="true">⚡</span> Strompreis</label>
-    <div class="pi-wrap">
-      <input type="number" id="inp-buy" value="30" min="1" max="150" step="0.5" aria-label="Strompreis in Cent pro kWh">
-      <span aria-hidden="true">ct/kWh</span>
-    </div>
-  </div>
-  <div class="pi-sep" aria-hidden="true"></div>
-  <div class="pi">
-    <label for="inp-sell"><span aria-hidden="true">🔌</span> Einspeisevergütung</label>
-    <div class="pi-wrap">
-      <input type="number" id="inp-sell" value="8" min="1" max="50" step="0.5" aria-label="Einspeisevergütung in Cent pro kWh">
-      <span aria-hidden="true">ct/kWh</span>
-    </div>
-  </div>
-  <div class="pi-sep" aria-hidden="true"></div>
-  <div class="pi">
-    <label for="inp-cost"><span aria-hidden="true">🏗</span> Anlagekosten (ROI)</label>
-    <div class="pi-wrap">
-      <input type="number" id="inp-cost" value="15000" min="1000" max="200000" step="500" aria-label="Anlagekosten in Euro für ROI-Berechnung">
-      <span aria-hidden="true">€</span>
-    </div>
-  </div>
-  <span class="price-hint">Werte anpassen → alle Berechnungen aktualisieren live</span>
-</div>
+<main id="main" class="band" tabindex="-1">
+  <section class="view" id="p-erzeugung" role="tabpanel" aria-labelledby="t-erzeugung" tabindex="0" hidden></section>
+  <section class="view" id="p-verbrauch" role="tabpanel" aria-labelledby="t-verbrauch" tabindex="0" hidden></section>
+  <section class="view" id="p-speicher" role="tabpanel" aria-labelledby="t-speicher" tabindex="0" hidden></section>
+  <section class="view" id="p-finanzen" role="tabpanel" aria-labelledby="t-finanzen" tabindex="0" hidden></section>
+  <section class="view" id="p-klima" role="tabpanel" aria-labelledby="t-klima" tabindex="0" hidden></section>
+  <section class="view" id="p-trends" role="tabpanel" aria-labelledby="t-trends" tabindex="0" hidden></section>
+  <noscript><p class="card">Helios Core benötigt JavaScript.</p></noscript>
+</main>
 
-<!-- ── Tab Navigation ────────────────────────────────── -->
-<nav class="tabs" role="tablist" aria-label="Dashboard-Navigation">
-  <button class="tab-btn active" role="tab" id="tab-erzeugung" aria-selected="true"  aria-controls="pane-erzeugung" onclick="showTab('erzeugung',this)"><span aria-hidden="true">⚡</span> Stromerzeugung</button>
-  <button class="tab-btn" role="tab" id="tab-verbrauch"   aria-selected="false" aria-controls="pane-verbrauch"   onclick="showTab('verbrauch',this)"><span aria-hidden="true">🏠</span> Verbrauch</button>
-  <button class="tab-btn" role="tab" id="tab-einspeisung" aria-selected="false" aria-controls="pane-einspeisung" onclick="showTab('einspeisung',this)"><span aria-hidden="true">🔌</span> Einspeisung</button>
-  <button class="tab-btn" role="tab" id="tab-batterie"    aria-selected="false" aria-controls="pane-batterie"    onclick="showTab('batterie',this)"><span aria-hidden="true">🔋</span> Batterie</button>
-  <button class="tab-btn" role="tab" id="tab-vorteile"    aria-selected="false" aria-controls="pane-vorteile"    onclick="showTab('vorteile',this)"><span aria-hidden="true">💰</span> Vorteile</button>
-  <button class="tab-btn" role="tab" id="tab-zukunft"     aria-selected="false" aria-controls="pane-zukunft"     onclick="showTab('zukunft',this)"><span aria-hidden="true">🔭</span> Zukunft</button>
-  <button class="tab-btn" role="tab" id="tab-klima"       aria-selected="false" aria-controls="pane-klima"       onclick="showTab('klima',this)"><span aria-hidden="true">🌱</span> Klimawirkung</button>
-  <button class="tab-btn" role="tab" id="tab-vergleich"   aria-selected="false" aria-controls="pane-vergleich"   onclick="showTab('vergleich',this)"><span aria-hidden="true">📊</span> Jahresvergleich</button>
-</nav>
-
-<!-- ── Tab Content ────────────────────────────────────── -->
-<main class="content" id="main-content">
-
-  <!-- ① Stromerzeugung ─────────────────────────────── -->
-  <div id="pane-erzeugung" class="pane active" role="tabpanel" aria-labelledby="tab-erzeugung" tabindex="0">
-    <div class="sec-hdr">
-      <h2>⚡ Stromerzeugung</h2>
-      <p>Solarenergieerzeugung durch Photovoltaikanlage — Jahres- &amp; Monatsverlauf</p>
-    </div>
-
-    <div class="cards" id="cards-erzeugung"></div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Jahreserzeugung<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-solar-annual" role="img" aria-label="Balkendiagramm: Solare Jahreserzeugung in MWh"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Monatliche Verteilung<span id="monthly-chart-sub">kWh Ø Vollbetriebsjahre</span></div>
-        <div id="month-sel-wrap" class="month-sel-wrap" style="display:none">
-          <label for="month-year-sel">Jahr:</label>
-          <select id="month-year-sel"></select>
-          <span class="month-badge">Echte Monatsdaten</span>
-        </div>
-        <div class="cbox"><canvas id="c-solar-monthly" role="img" aria-label="Balkendiagramm: Monatliche Solarverteilung in kWh"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Solare Energiebilanz<span>Eigenverbrauch + Einspeisung MWh</span></div>
-      <div class="cbox sm"><canvas id="c-solar-balance" role="img" aria-label="Gestapeltes Balkendiagramm: Eigenverbrauch und Einspeisung in MWh"></canvas></div>
-    </div>
-
-    <!-- EVQ -->
-    <div class="evq-grid">
-      <div class="evq-crd">
-        <div class="card-lbl">Eigenverbrauchsquote (aktuell)</div>
-        <div class="evq-pct" id="evq-last" style="color:var(--amber)">—</div>
-        <div class="evq-sub">% der <em>erzeugten</em> Solar-kWh selbst genutzt</div>
-      </div>
-      <div class="evq-crd">
-        <div class="card-lbl">Autarkie (aktuell)</div>
-        <div class="evq-pct" id="evq-autarky" style="color:var(--green)">—</div>
-        <div class="evq-sub">% des <em>Verbrauchs</em> aus eigener Erzeugung</div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-bottom:20px">
-      <div class="ctitle">Eigenverbrauchsquote vs. Autarkie<span>% — Zwei Seiten der Systemeffizienz</span></div>
-      <div class="cbox sm"><canvas id="c-evq" role="img" aria-label="Balkendiagramm: Eigenverbrauchsquote und Autarkie in Prozent"></canvas></div>
-    </div>
-
-    <div class="analysis">
-      <h3>Analyse — Stromerzeugung</h3>
-      <ul>
-        <li><strong>2022 (Inbetriebnahme):</strong> Nur 2,4 MWh — Anlage wurde unterjährig aufgeschaltet, daher deutlich unter dem Jahrespotenzial.</li>
-        <li><strong>2023–2025 (Vollbetrieb):</strong> Stabile 10,0–10,4 MWh/Jahr belegen eine zuverlässige und konsistente Anlagenleistung.</li>
-        <li><strong>Plateau-Analyse:</strong> Minimaler Zuwachs +0,4 MWh von 2023→2024 signalisiert, dass die Anlage ihr physikalisches Leistungsmaximum erreicht hat.</li>
-        <li><strong>Saisonalität:</strong> ~70 % der Jahresleistung wird April–September erzielt; Juni/Juli sind die Spitzenmonate (je ~14 %).</li>
-        <li><strong>Prognose 2026:</strong> Q1 = 3,2 MWh entspricht dem historischen Q1-Anteil (~30 %) → Volljahr ≈ 10,4 MWh realistisch.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ② Verbrauch ──────────────────────────────────── -->
-  <div id="pane-verbrauch" class="pane" role="tabpanel" aria-labelledby="tab-verbrauch" tabindex="0">
-    <div class="sec-hdr">
-      <h2>🏠 Verbrauch</h2>
-      <p>Haushaltsstromverbrauch, Eigenverbrauchsquellen und Netzabhängigkeit</p>
-    </div>
-
-    <!-- Score Widget -->
-    <div class="score-wrap" id="score-widget">
-      <div class="score-svg-wrap">
-        <svg class="score-svg" viewBox="0 0 100 100" role="img" aria-labelledby="score-svg-title">
-          <title id="score-svg-title">Netz-Unabhängigkeits-Score Kreisdiagramm</title>
-          <circle cx="50" cy="50" r="42" fill="none" stroke="#263449" stroke-width="12" aria-hidden="true"/>
-          <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="#10b981" stroke-width="12"
-            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
-            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease,stroke .4s" aria-hidden="true"/>
-        </svg>
-        <div class="score-num-big" id="score-num" style="color:var(--green)" aria-live="polite">—</div>
-        <div class="score-denom" aria-hidden="true">/ 100</div>
-      </div>
-      <div class="score-info">
-        <div class="score-title">Netz-Unabhängigkeits-Score</div>
-        <div class="score-rating" id="score-rating">—</div>
-        <div id="score-breakdown"></div>
-      </div>
-    </div>
-
-    <div class="cards" id="cards-verbrauch"></div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Verbrauchsquellen je Jahr<span>gestapelt MWh</span></div>
-        <div class="cbox"><canvas id="c-cons-stacked" role="img" aria-label="Gestapeltes Balkendiagramm: Verbrauchsquellen Solar, Powerwall und Netz in MWh"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Autarkiequote<span>% Eigenversorgung pro Jahr</span></div>
-        <div class="cbox"><canvas id="c-autarky" role="img" aria-label="Liniendiagramm: Autarkiequote in Prozent je Jahr"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Autarkie-Entwicklung Detail</div>
-      <div class="prog-list" id="prog-autarky"></div>
-    </div>
-    <div class="analysis">
-      <h3>Analyse — Verbrauch &amp; Eigenversorgung</h3>
-      <ul>
-        <li><strong>+30 Pp. Autarkiesteigerung:</strong> Von ~63 % (2022) auf 93,5 % (2025) — eine herausragende Entwicklung innerhalb von 3 Jahren.</li>
-        <li><strong>Powerwall-Effekt:</strong> Die Batterie ermöglichte den Sprung von ~84 % (2024) auf 93,5 % (2025), trotz leicht gesunkenem Verbrauch.</li>
-        <li><strong>Stabiler Verbrauch:</strong> 2,3–2,6 MWh/Jahr zeigen gleichbleibende Lebensgewohnheiten — keine energetischen Ausreißer.</li>
-        <li><strong>Netzbezug fast eliminiert:</strong> 150 kWh Restbezug entspricht ~12 Volllaststunden — faktisch netzunabhängig.</li>
-        <li><strong>2026-Trend:</strong> Hochrechnung auf ~12 % Netzbezug — weitgehende Eigenversorgung bleibt stabil.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ③ Einspeisung ────────────────────────────────── -->
-  <div id="pane-einspeisung" class="pane" role="tabpanel" aria-labelledby="tab-einspeisung" tabindex="0">
-    <div class="sec-hdr">
-      <h2>🔌 Netzeinspeisung</h2>
-      <p>Überschussstrom ins öffentliche Netz — Menge, Erlöse und Versorgungsleistung</p>
-    </div>
-
-    <div class="cards" id="cards-einspeisung"></div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Jährliche Einspeisung<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-feedin-annual" role="img" aria-label="Balkendiagramm: Jährliche Netzeinspeisung in MWh"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Erzeugung vs. Einspeisung<span>Eigenverbrauchsanteil sichtbar</span></div>
-        <div class="cbox"><canvas id="c-feedin-vs-solar" role="img" aria-label="Gestapeltes Balkendiagramm: Eigenverbrauch vs. Einspeisung in MWh"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Jährliche Einspeisevergütung<span>Geschätzte Einnahmen €</span></div>
-      <div class="cbox sm"><canvas id="c-feedin-revenue" role="img" aria-label="Balkendiagramm: Geschätzte jährliche Einspeisevergütung in Euro"></canvas></div>
-    </div>
-    <div class="analysis">
-      <h3>Analyse — Netzeinspeisung</h3>
-      <ul>
-        <li><strong>Hoher Überschuss:</strong> Ø 74 % der erzeugten Energie werden eingespeist — das System produziert deutlich mehr als der Haushalt benötigt.</li>
-        <li><strong>Passives Einkommen:</strong> Geschätzte 2.160 € Vergütung über die Gesamtlaufzeit bei 8 ct/kWh (aktueller DE-Satz).</li>
-        <li><strong>Netzversorgung:</strong> 27 MWh eingespeister Solarstrom versorgen rechnerisch ca. 7 Durchschnittshaushalte ein Jahr lang.</li>
-        <li><strong>Optimierungspotenzial:</strong> Größerer Batteriespeicher oder E-Fahrzeug könnte Eigenverbrauch um 10–20 % steigern und Einspeiseverluste senken.</li>
-        <li><strong>Erlösprognose 2030:</strong> Bei jährlich ~7,8 MWh Einspeisung werden bis 2030 weitere ~2.500 € Vergütung erzielt.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ④ Batterie ───────────────────────────────────── -->
-  <div id="pane-batterie" class="pane" role="tabpanel" aria-labelledby="tab-batterie" tabindex="0">
-    <div class="sec-hdr">
-      <h2>🔋 Batterie-Nutzung (Tesla Powerwall)</h2>
-      <p>Speicherung, Entladung und Einfluss auf Autarkie und Netzbezug</p>
-    </div>
-
-    <div class="cards" id="cards-batterie"></div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Powerwall-Entladung je Jahr<span>MWh</span></div>
-        <div class="cbox"><canvas id="c-bat-annual" role="img" aria-label="Balkendiagramm: Jährliche Powerwall-Entladung in MWh"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Powerwall vs. Netzbezug<span>Batterie verdrängt Grid (MWh)</span></div>
-        <div class="cbox"><canvas id="c-bat-vs-grid" role="img" aria-label="Liniendiagramm: Powerwall-Entladung vs. Netzbezug in MWh"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Powerwall-Anteil am Jahresverbrauch</div>
-      <div class="prog-list" id="prog-battery"></div>
-    </div>
-    <div class="analysis">
-      <h3>Analyse — Powerwall</h3>
-      <ul>
-        <li><strong>Stetige Steigerung:</strong> Powerwall-Nutzung von 0,38 MWh (2022) auf 1,1 MWh (2025) — Optimierung von Lade-/Entlade-Strategien wirkt.</li>
-        <li><strong>Inverse Korrelation:</strong> Mit jedem MWh mehr Powerwall-Entladung sinkt der Netzbezug proportional — perfekte Substitution.</li>
-        <li><strong>Amortisation:</strong> Die Batterie hat durch Netzersatz bereits ~882 € erwirtschaftet. Annahme: 15 Ct/kWh Mehrwert ggü. Einspeisung.</li>
-        <li><strong>Erweiterungspotenzial:</strong> Zweite Powerwall würde Autarkie auf ~97–99 % heben und Netzbezug auf unter 30 kWh/Jahr senken.</li>
-        <li><strong>Saisonaler Betrieb:</strong> Sommer: tägliches Laden/Entladen. Winter: Überbrückung der Nacht-/Morgenstunden bei schwacher Einstrahlung.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ⑤ Vorteile ───────────────────────────────────── -->
-  <div id="pane-vorteile" class="pane" role="tabpanel" aria-labelledby="tab-vorteile" tabindex="0">
-    <div class="sec-hdr">
-      <h2>💰 Vorteile &amp; Ersparnisse</h2>
-      <p>Wirtschaftliche, energetische und strategische Vorteile der Anlage auf einen Blick</p>
-    </div>
-
-    <div class="benefit-grid">
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">💰</div>
-        <div class="bbody">
-          <h3>Finanzielle Ersparnis</h3>
-          <p>Eigenverbrauch + Einspeisevergütung kombiniert.</p>
-          <div class="bhi" id="bc-total-sav" style="color:var(--amber)">—</div>
-          <p style="margin-top:3px">Kumuliert 2022–2026</p>
-        </div>
-      </div>
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(16,185,129,.15)" aria-hidden="true">🌍</div>
-        <div class="bbody">
-          <h3>CO₂-Einsparung</h3>
-          <p>Vermiedene Emissionen durch solaren Eigenverbrauch.</p>
-          <div class="bhi" id="bc-total-co2" style="color:var(--green)">—</div>
-          <p style="margin-top:3px">≈ 170 Bäume pro Jahr</p>
-        </div>
-      </div>
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(6,182,212,.15)" aria-hidden="true">🔒</div>
-        <div class="bbody">
-          <h3>Energieunabhängigkeit</h3>
-          <p>Nahezu vollständige Entkopplung vom Stromnetz.</p>
-          <div class="bhi" id="bc-best-autarky" style="color:var(--cyan)">—</div>
-          <p style="margin-top:3px">Autarkie-Quote 2025</p>
-        </div>
-      </div>
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(139,92,246,.15)" aria-hidden="true">📈</div>
-        <div class="bbody">
-          <h3>Immobilien-Wertsteigerung</h3>
-          <p>PV + Speicher erhöhen den Marktwert der Immobilie.</p>
-          <div class="bhi" style="color:var(--violet)">+5–10 %</div>
-          <p style="margin-top:3px">Typische Wertsteigerung DE</p>
-        </div>
-      </div>
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(239,68,68,.15)" aria-hidden="true">⚡</div>
-        <div class="bbody">
-          <h3>Preisstabilität</h3>
-          <p>Eigenverbrauch ist vom Börsenpreis entkoppelt (Ø +5 %/Jahr DE).</p>
-          <div class="bhi" style="color:var(--red)">Gesichert</div>
-          <p style="margin-top:3px">Kein Preisrisiko für ~93 %</p>
-        </div>
-      </div>
-      <div class="bcrd">
-        <div class="bicn" style="background:rgba(245,158,11,.15)" aria-hidden="true">🔋</div>
-        <div class="bbody">
-          <h3>Blackout-Schutz</h3>
-          <p>Powerwall versorgt Haushalt auch bei Netzausfall.</p>
-          <div class="bhi" style="color:var(--amber)">~18–24 h</div>
-          <p style="margin-top:3px">Notstrom-Autonomie</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Jährliche Gesamtersparnis<span>€ (Eigenverbrauch + Einspeisung)</span></div>
-        <div class="cbox"><canvas id="c-savings" role="img" aria-label="Gestapeltes Balkendiagramm: Jährliche Gesamtersparnis durch Eigenverbrauch und Einspeisung"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Stromkosten: ohne vs. mit Solar<span>€ pro Jahr</span></div>
-        <div class="cbox"><canvas id="c-cost-cmp" role="img" aria-label="Liniendiagramm: Vergleich Stromkosten ohne Solar vs. mit Solar in Euro"></canvas></div>
-      </div>
-    </div>
-    <div class="analysis">
-      <h3>Analyse — Wirtschaftlichkeit</h3>
-      <ul>
-        <li><strong>ROI-Berechnung:</strong> Bei Anlagekosten ~15.000 € und Ø 1.245 €/Jahr Ersparnis → Amortisation in ~12 Jahren (ohne Förderungen).</li>
-        <li><strong>Steigende Rendite:</strong> Jede 5 %-Strompreiserhöhung erhöht den realen Ertrag des Eigenverbrauchs — die Anlage wird wertvoller.</li>
-        <li><strong>2025 als Wendepunkt:</strong> 93,5 % Autarkie = faktische Entkopplung von Energiepreis-Schwankungen für fast den gesamten Verbrauch.</li>
-        <li><strong>Förderhinweis:</strong> KfW 270, Einspeisevergütung EEG, und ggf. steuerliche Begünstigung können die Amortisationszeit deutlich verkürzen.</li>
-      </ul>
-    </div>
-    <div class="roi-box" id="roi-box">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">🏗 Amortisations-Rechner <span style="font-size:10px;color:var(--muted);font-weight:400">(Anlagekosten in der Einstellungsleiste anpassbar)</span></div>
-      <div id="roi-content"></div>
-    </div>
-  </div>
-
-  <!-- ⑥ Zukunft ────────────────────────────────────── -->
-  <div id="pane-zukunft" class="pane" role="tabpanel" aria-labelledby="tab-zukunft" tabindex="0">
-    <div class="sec-hdr">
-      <h2>🔭 Zukunft &amp; Prognosen</h2>
-      <p>Trendanalyse, Hochrechnungen und Optimierungsempfehlungen 2026–2030</p>
-    </div>
-
-    <div class="cards">
-      <div class="card">
-        <div class="card-lbl">Prognose 2026</div>
-        <div class="card-val">10,4 MWh</div>
-        <div class="card-sub">Volljahres-Hochrechnung</div>
-        <div class="badge-trend t-eq">= Plateau stabil</div>
-      </div>
-      <div class="card">
-        <div class="card-lbl">Potenzial Autarkie</div>
-        <div class="card-val" style="color:var(--green)">98 %</div>
-        <div class="card-sub">Mit 2× Powerwall</div>
-        <div class="badge-trend t-up">↑ Fast vollständig</div>
-      </div>
-      <div class="card">
-        <div class="card-lbl">Prognose 2027–2030</div>
-        <div class="card-val" style="color:var(--cyan)">~41 MWh</div>
-        <div class="card-sub">4-Jahres-Summe</div>
-      </div>
-      <div class="card">
-        <div class="card-lbl">Kumuliert bis 2030</div>
-        <div class="card-val" style="color:var(--violet)">~11.500 €</div>
-        <div class="card-sub">Geschätzte Gesamtersparnis</div>
-      </div>
-    </div>
-
-    <div class="ccrd">
-      <div class="ctitle">Erzeugungs-Prognose 2022–2030<span>Ist-Werte (amber) + Projektion (cyan)</span></div>
-      <div class="cbox tall"><canvas id="c-forecast" role="img" aria-label="Balkendiagramm: Solarerzeugungs-Prognose 2022 bis 2030 mit Ist-Werten und Projektion"></canvas></div>
-    </div>
-
-    <div class="ccrd">
-      <div class="ctitle">Prognose-Tabelle 2022–2030</div>
-      <table class="ftbl">
-        <thead>
-          <tr>
-            <th>Jahr</th><th>Status</th><th>Erzeugung</th>
-            <th>Eigenverbrauch</th><th>Autarkie</th>
-            <th>Ersparnis (€)</th><th>CO₂ (kg)</th>
-          </tr>
-        </thead>
-        <tbody id="ftbl-body"></tbody>
-      </table>
-    </div>
-
-    <div class="analysis">
-      <h3>Analyse — Zukunftsperspektiven</h3>
-      <ul>
-        <li><strong>Stabiles Plateau:</strong> Die Anlage erzeugt konstant ~10,4 MWh/Jahr — Steigerungen nur durch physische Erweiterung möglich.</li>
-        <li><strong>Empfehlung 1 – 2. Powerwall:</strong> Erhöht Autarkie auf ~97–98 % und sichert auch bewölkte Winterperioden vollständig ab.</li>
-        <li><strong>Empfehlung 2 – E-Mobilität:</strong> Laden mit Solarstrom würde den Eigenverbrauch um 1.500–3.000 kWh/Jahr steigern — erhebliche Zusatzersparnis.</li>
-        <li><strong>Empfehlung 3 – Modulreinigung:</strong> Jährliche Reinigung + Monitoring bringen 2–5 % Mehrertrag ohne Investitionskosten.</li>
-        <li><strong>Inflation-Hedge:</strong> Bei 5 %/Jahr Strompreissteigerung steigt der Wert des Eigenverbrauchs bis 2030 von 30 auf ~40 ct/kWh — Anlage wird profitabler.</li>
-        <li><strong>Degradation:</strong> PV-Module verlieren ~0,5 %/Jahr an Leistung → bis 2030 ca. −2 % Ertrag gegenüber 2024. Kalkuliert in der Prognose.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ⑦ Klimawirkung ──────────────────────────────── -->
-  <div id="pane-klima" class="pane" role="tabpanel" aria-labelledby="tab-klima" tabindex="0">
-    <div class="sec-hdr">
-      <h2>🌱 Klimawirkung</h2>
-      <p>CO₂-Bilanz, Umweltbeitrag und ökologischer Fußabdruck der Solaranlage</p>
-    </div>
-
-    <div class="impact-grid">
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🌿</div><div class="icrd-val" id="ic-co2-total">—</div><div class="icrd-lbl">CO₂ eingespart gesamt</div></div>
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🌳</div><div class="icrd-val" id="ic-trees">—</div><div class="icrd-lbl">Baum-Äquivalente<br>(je 21 kg CO₂/Jahr)</div></div>
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">🚗</div><div class="icrd-val" id="ic-km">—</div><div class="icrd-lbl">Vermiedene Auto-km<br>(120 g CO₂/km)</div></div>
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">✈️</div><div class="icrd-val" id="ic-flights">—</div><div class="icrd-lbl">FRA–JFK Flüge vermieden<br>(800 kg CO₂/Flug)</div></div>
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">💡</div><div class="icrd-val" id="ic-self">—</div><div class="icrd-lbl">Selbst genutzter Solarstrom<br>(ohne Netzeinspeisung)</div></div>
-      <div class="icrd"><div class="icrd-icon" aria-hidden="true">⚡</div><div class="icrd-val" id="ic-total">—</div><div class="icrd-lbl">Saubere Energie erzeugt<br>für Haushalt &amp; Netz</div></div>
-    </div>
-
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">CO₂-Einsparung je Jahr<span>kg CO₂</span></div>
-        <div class="cbox"><canvas id="c-co2-annual" role="img" aria-label="Balkendiagramm: CO₂-Einsparung je Jahr in Kilogramm"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Kumulierte CO₂-Einsparung<span>kg — Gesamtbilanz</span></div>
-        <div class="cbox"><canvas id="c-co2-cum" role="img" aria-label="Liniendiagramm: Kumulierte CO₂-Einsparung in Kilogramm"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Klimaziel-Fortschritt</div>
-      <div class="prog-list" id="prog-climate"></div>
-    </div>
-    <div class="analysis green">
-      <h3>Klimaanalyse</h3>
-      <ul>
-        <li><strong>Wachsende Wirkung:</strong> CO₂-Einsparung stieg von 342 kg (2022) auf 988 kg (2025) — fast dreifache Klimaentlastung durch Systemoptimierung.</li>
-        <li><strong>Netzeinspeisung als Bonus:</strong> Die 27 MWh eingespeister Solarstrom verdrängen zusätzlich ca. 10 t CO₂ aus dem deutschen Strommix — nicht in der eigenen Bilanz, aber real.</li>
-        <li><strong>Lebenszyklus-Bilanz:</strong> Produktions-CO₂ einer PV-Anlage (~600–1.000 kg CO₂/kWp) ist bereits amortisiert — die Anlage ist ab Jahr 2 CO₂-positiv.</li>
-        <li><strong>Prognose bis 2030:</strong> Weitere ~4.000 kg CO₂ werden eingespart → Gesamtbilanz 2022–2030: ~7.500 kg CO₂ vermieden.</li>
-        <li><strong>Referenz:</strong> CO₂-Faktor DE Stromnetz: 380 g/kWh (Umweltbundesamt 2023). Mit Energiewende sinkt dieser Wert weiter — Solarstrom bleibt überlegen.</li>
-      </ul>
-    </div>
-  </div>
-
-
-  <!-- ⑧ Jahresvergleich ─────────────────────────────── -->
-  <div id="pane-vergleich" class="pane" role="tabpanel" aria-labelledby="tab-vergleich" tabindex="0">
-    <div class="sec-hdr">
-      <h2>📊 Jahresvergleich</h2>
-      <p>Alle Kernindikatoren direkt gegenübergestellt — Radar, YoY-Entwicklung und Vollvergleich</p>
-    </div>
-    <div class="cgrid">
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Systemleistung je Jahr<span>Normalisiert — Bestes Jahr = 100 %</span></div>
-        <div class="cbox tall"><canvas id="c-radar" role="img" aria-label="Radardiagramm: Systemleistung je Jahr normalisiert auf 100 Prozent"></canvas></div>
-      </div>
-      <div class="ccrd" style="margin-bottom:0">
-        <div class="ctitle">Year-over-Year Entwicklung<span>% Veränderung zum Vorjahr</span></div>
-        <div class="cbox tall"><canvas id="c-yoy" role="img" aria-label="Balkendiagramm: Year-over-Year Veränderung der Kernindikatoren in Prozent"></canvas></div>
-      </div>
-    </div>
-    <div class="ccrd" style="margin-top:18px">
-      <div class="ctitle">Vollständiger Jahresvergleich<span>↑ Bestwert hervorgehoben · Δ vs. Vorjahr</span></div>
-      <div style="overflow-x:auto">
-        <table class="cmp-tbl">
-          <thead id="cmp-head"></thead>
-          <tbody id="cmp-body"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="analysis" style="margin-top:18px">
-      <h3>Analyse — Jahresvergleich</h3>
-      <ul id="cmp-analysis"></ul>
-    </div>
-  </div>
-
-</main><!-- /content -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+'use strict';
 // ═══════════════════════════════════════════════════════════════════════════
-// REACTIVE SETTINGS  (updated by price bar inputs)
+// CONSTANTS & STATE
 // ═══════════════════════════════════════════════════════════════════════════
-let buyPrice    = 30;    // ct/kWh
-let sellPrice   = 8;     // ct/kWh
-let systemCost  = 15000; // €
-let currentRows = null;  // last loaded rows — for re-derive on price change
-let _derived    = null;  // last derived data object
-let builtTabs        = new Set(); // tracks which tabs have had charts initialised
-const _builtDomContent = new Set(); // tracks which tabs have lazy DOM content built
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CHART.JS LAZY LOADER  — loads chart.js on demand, never blocking render
-// ═══════════════════════════════════════════════════════════════════════════
-let _chartJsLoaded = false;
-const _chartJsCbs  = [];
-function _loadChartJs() {
-  if (document.getElementById('cjs')) return;
-  const s = document.createElement('script');
-  s.id  = 'cjs';
-  s.src = 'chart.umd.min.js';
-  s.onerror = () => {
-    s.onerror = null;
-    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-  };
-  s.onload = () => {
-    Chart.defaults.color       = '#94a3b8';
-    Chart.defaults.borderColor = '#334155';
-    Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
-    Chart.defaults.font.size   = 12;
-    _chartJsLoaded = true;
-    _chartJsCbs.splice(0).forEach(cb => cb());
-  };
-  document.head.appendChild(s);
-}
-function _whenChartJs(cb) {
-  if (_chartJsLoaded) { cb(); return; }
-  _chartJsCbs.push(cb);
-  _loadChartJs();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FIXED CONSTANTS
-// ═══════════════════════════════════════════════════════════════════════════
-const CO2_KG           = 0.380; // kg CO₂ per kWh (DE Bundesnetz-Durchschnitt)
-const TREE_CO2_KG      = 21;    // kg CO₂ absorbed per tree per year
-const CAR_CO2_G_PER_KM = 120;   // g CO₂ per km (average petrol car)
-const FLIGHT_CO2_KG    = 800;   // kg CO₂ for FRA-JFK round equivalent
-const MONTH_LABELS  = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-const MONTH_FACTORS = [0.03,0.05,0.08,0.11,0.13,0.14,0.13,0.11,0.09,0.06,0.04,0.03];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DEFAULT DATA  (matches data.csv)
-// ═══════════════════════════════════════════════════════════════════════════
-const DEFAULT_ROWS = [
-  {year:2022,home:1.3,powerwall:0.38,solar:2.4,fromGrid:0.48,toGrid:1.5},
-  {year:2023,home:2.6,powerwall:1.0, solar:10.0,fromGrid:0.54,toGrid:7.7},
-  {year:2024,home:2.6,powerwall:1.0, solar:10.4,fromGrid:0.42,toGrid:8.0},
-  {year:2025,home:2.3,powerwall:1.1, solar:10.4,fromGrid:0.15,toGrid:7.8},
-  {year:2026,home:1.2,powerwall:0.46,solar:3.2, fromGrid:0.17,toGrid:2.0},
+const CO2_KG = 0.38;          // kg CO₂ per kWh, German grid mix (UBA 2023)
+const TREE_KG = 21;           // kg CO₂ bound by one tree per year
+const CAR_G_KM = 120;         // g CO₂ per km, average petrol car
+const FLIGHT_KG = 800;        // kg CO₂ per FRA–JFK flight
+const HOUSEHOLD_MWH = 3.5;    // annual demand of an average household
+const DEGRADATION = 0.005;    // module output loss per year
+const FULL_YEAR_SHARE = 0.6;  // annual data: below 60 % of the best year = partial year
+const HORIZON = 2030;
+const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTH_SHARE = [.03,.05,.08,.11,.13,.14,.13,.11,.09,.06,.04,.03]; // typical PV yield distribution
+const SAMPLE = [ // mirrors data.csv
+  {year:2022, home:1.3, powerwall:0.38, solar:2.4,  fromGrid:0.48, toGrid:1.5},
+  {year:2023, home:2.6, powerwall:1.0,  solar:10.0, fromGrid:0.54, toGrid:7.7},
+  {year:2024, home:2.6, powerwall:1.0,  solar:10.4, fromGrid:0.42, toGrid:8.0},
+  {year:2025, home:2.3, powerwall:1.1,  solar:10.4, fromGrid:0.15, toGrid:7.8},
+  {year:2026, home:1.2, powerwall:0.46, solar:3.2,  fromGrid:0.17, toGrid:2.0},
 ];
+const LIMITS = {buy:[1,150], sell:[0,50], cost:[1000,200000]};
+const STORE_KEY = 'helios:v1';
+
+const state = {buy:30, sell:8, cost:15000, rows:SAMPLE, source:null};
+let data = null;     // derived from state, see derive()
+let current = null;  // active view id
+
+const $ = s => document.querySelector(s);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CSV PARSER
+// FORMATTING
 // ═══════════════════════════════════════════════════════════════════════════
+const NBSP = ' ';
+const NF = [0, 1, 2].map(d => new Intl.NumberFormat('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}));
+const num = (n, d = 1) => NF[d].format(n).replace('-', '−');
+const signed = (n, d = 1) => (n > 0 ? '+' : '') + num(n, d);
+const pct = (n, d = 1) => num(n, d) + NBSP + '%';
+const eur = n => num(n, 0) + NBSP + '€';
+const kg = n => num(n, 0) + NBSP + 'kg';
+const ct = n => num(n, Number.isInteger(n) ? 0 : 1);
+const energy = mwh => Math.abs(mwh) < 1 ? [num(mwh * 1000, 0), 'kWh'] : [num(mwh, 1), 'MWh'];
+const E = mwh => energy(mwh).join(NBSP);
+const span = ys => ys.length > 1 ? `${ys[0].year}–${ys.at(-1).year}` : String(ys[0].year);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV
+// ═══════════════════════════════════════════════════════════════════════════
+const toNum = s => {
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); // German decimal comma
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+};
+
+function parseDate(s) {
+  let m = s.match(/^(\d{4})(?:-(\d{1,2}))?/);
+  if (m) return {year:+m[1], month:+(m[2] || 1)};
+  m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  return m ? {year:+m[3], month:+m[2]} : null;
+}
+
 function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) throw new Error('CSV hat zu wenige Zeilen');
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) throw new Error('Die CSV enthält keine Datenzeilen.');
   const sep = lines[0].includes(';') ? ';' : ',';
-  const hdrs = lines[0].split(sep).map(h => h.trim().toLowerCase());
-  const ci = kw => {
-    const i = hdrs.findIndex(h => h.includes(kw));
-    if (i < 0) throw new Error(`Spalte mit "${kw}" nicht gefunden`);
-    return i;
+  const cells = l => l.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+  const head = cells(lines[0]).map(h => h.toLowerCase());
+  const col = key => {
+    const i = head.findIndex(h => h.includes(key));
+    if (i < 0) throw new Error(`Spalte „${key}“ fehlt in der CSV.`);
+    return {i, scale: head[i].includes('kwh') ? 0.001 : 1}; // normalise to MWh
   };
-  const iHome = ci('home');
-  const iPW   = ci('powerwall');
-  const iSol  = ci('solar');
-  const iFrom = ci('from grid');
-  const iTo   = ci('to grid');
+  const cols = {home:col('home'), powerwall:col('powerwall'), solar:col('solar'), fromGrid:col('from grid'), toGrid:col('to grid')};
   const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const l = lines[i].trim(); if (!l) continue;
-    const c = l.split(sep);
-    const dateStr = c[0] || '';
-    const yr = parseInt(dateStr);
-    if (isNaN(yr)) continue;
-    // extract month from ISO date string (e.g. 2023-06-01T...)
-    const mMatch = dateStr.match(/^\d{4}-(\d{2})/);
-    const month  = mMatch ? parseInt(mMatch[1]) : 1;
-    rows.push({
-      year: yr, _month: month,
-      home:     parseFloat(c[iHome]) || 0,
-      powerwall:parseFloat(c[iPW])   || 0,
-      solar:    parseFloat(c[iSol])  || 0,
-      fromGrid: parseFloat(c[iFrom]) || 0,
-      toGrid:   parseFloat(c[iTo])   || 0,
-    });
+  for (const line of lines.slice(1)) {
+    const c = cells(line), date = parseDate(c[0] || '');
+    if (!date) continue;
+    const row = {...date};
+    for (const [k, {i, scale}] of Object.entries(cols)) row[k] = toNum(c[i] || '') * scale;
+    rows.push(row);
   }
-  rows.sort((a,b) => a.year - b.year || a._month - b._month);
-  if (!rows.length) throw new Error('Keine gültigen Datenzeilen');
-  return rows;
+  if (!rows.length) throw new Error('Keine gültigen Datenzeilen gefunden.');
+  return rows.sort((a, b) => a.year - b.year || a.month - b.month);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DERIVE  – all computed arrays from raw rows
+// DERIVE — every number shown in the UI comes from here
 // ═══════════════════════════════════════════════════════════════════════════
-function derive(rows) {
-  const BUY  = buyPrice  / 100;   // reactive €/kWh
-  const SELL = sellPrice / 100;
+const sum = (arr, k) => arr.reduce((s, x) => s + (x[k] || 0), 0);
+const mean = (arr, k) => arr.length ? sum(arr, k) / arr.length : 0;
+const best = (arr, k, low = false) => arr.reduce((b, x) => (low ? x[k] < b[k] : x[k] > b[k]) ? x : b);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const ratio = (a, b) => b ? a / b : 0;
 
-  // ── Monthly vs. annual detection ─────────────────────────────────────────
-  const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a,b)=>a-b);
-  const isMonthly   = rows.length > uniqueYears.length;
-  let monthlyByYear = {};
-  let annualRows;
-
-  if (isMonthly) {
-    uniqueYears.forEach(yr => {
-      monthlyByYear[yr] = rows.filter(r => r.year === yr).sort((a,b) => a._month - b._month);
-    });
-    annualRows = uniqueYears.map(yr => {
-      const yr_r = monthlyByYear[yr];
-      const sum  = k => +(yr_r.reduce((s,r) => s + r[k], 0)).toFixed(3);
-      return { year:yr, home:+sum('home'), powerwall:+sum('powerwall'),
-               solar:+sum('solar'), fromGrid:+sum('fromGrid'), toGrid:+sum('toGrid') };
-    });
-  } else {
-    annualRows = rows;
+function derive({rows, buy, sell, cost}) {
+  const BUY = buy / 100, SELL = sell / 100;
+  const byYear = new Map();
+  for (const r of rows) {
+    let y = byYear.get(r.year);
+    if (!y) byYear.set(r.year, y = {year:r.year, home:0, pw:0, solar:0, fgrid:0, tgrid:0, months:[]});
+    y.home += r.home; y.pw += r.powerwall; y.solar += r.solar; y.fgrid += r.fromGrid; y.tgrid += r.toGrid;
+    y.months.push(r);
   }
+  const isMonthly = rows.length > byYear.size;
+  const thisYear = new Date().getFullYear();
+  const maxSolar = Math.max(...[...byYear.values()].map(y => y.solar));
 
-  const yrs   = annualRows.map(r => r.year);
-  const lbls  = yrs.map(String);
-  const solar = annualRows.map(r => r.solar);
-  const home  = annualRows.map(r => r.home);
-  const pw    = annualRows.map(r => r.powerwall);
-  const fgrid = annualRows.map(r => r.fromGrid);
-  const tgrid = annualRows.map(r => r.toGrid);
-
-  const selfCons  = solar.map((s,i) => Math.max(0, +(s - tgrid[i]).toFixed(2)));
-  const solDirect = home.map((h,i)  => Math.max(0, +(h - pw[i] - fgrid[i]).toFixed(2)));
-  const autarky   = home.map((h,i)  => h > 0 ? +((h - fgrid[i]) / h * 100).toFixed(1) : 0);
-  const evq       = solar.map((s,i) => s > 0 ? +(selfCons[i] / s * 100).toFixed(1) : 0);
-  const co2       = selfCons.map(sc => +(sc * 1000 * CO2_KG).toFixed(0));
-  const savings   = selfCons.map((sc,i) => +(sc*1000*BUY + tgrid[i]*1000*SELL).toFixed(0));
-  const feedRev   = tgrid.map(tg  => +(tg*1000*SELL).toFixed(0));
-  const costWout  = home.map(h    => +(h*1000*BUY).toFixed(0));
-  const costWith  = fgrid.map(fg  => +(fg*1000*BUY).toFixed(0));
-  const cumCO2    = co2.reduce((acc,v) => [...acc, (acc[acc.length-1]||0)+v], []);
-
-  // Monthly simulation (used when no real monthly rows)
-  const fullIdx = solar.reduce((acc,s,i) => { if (s > 5) acc.push(i); return acc; }, []);
-  const fullY   = fullIdx.map(i => solar[i]);
-  const avgFull = fullY.length ? fullY.reduce((a,b)=>a+b,0)/fullY.length : solar[solar.length-1];
-  const mKwh    = MONTH_FACTORS.map(f => +(f * avgFull * 1000).toFixed(0));
-
-  // Forecast
-  const bestIdx = solar.reduce((bi,s,i) => s > solar[bi] ? i : bi, 0);
-  const baseSol = solar[bestIdx], baseTG = tgrid[bestIdx];
-  const lastYr  = yrs[yrs.length-1], lastAut = autarky[autarky.length-1];
-  const fYears = [...yrs], fSolar = [...solar], fToGrid = [...tgrid];
-  const fAutark = [...autarky], fIsAct = yrs.map(() => true);
-  for (let i = 1; i <= 5; i++) {
-    const deg = Math.max(0.95, 1 - 0.005*i);
-    fYears.push(lastYr + i);
-    fSolar.push(+(baseSol * deg).toFixed(1));
-    fToGrid.push(+(baseTG * deg).toFixed(1));
-    fAutark.push(+(Math.min(98, lastAut + i*0.5)).toFixed(1));
-    fIsAct.push(false);
-  }
-
-  // ROI
-  const fullSav      = fullIdx.map(i => savings[i]);
-  const avgAnnualSav = Math.round(fullSav.length
-    ? fullSav.reduce((a,b)=>a+b,0)/fullSav.length
-    : savings.reduce((a,b)=>a+b,0)/savings.length);
-  const totalSav   = savings.reduce((a,b)=>a+b,0);
-  const roiProgress = Math.min(100, totalSav / systemCost * 100);
-  const paybackYears = avgAnnualSav > 0 ? systemCost / avgAnnualSav : 999;
-
-  // Netz-Unabhängigkeits-Score
-  const li          = autarky.length - 1;
-  const autScr      = autarky[li] / 100;
-  const gridFreeScr = Math.max(0, 1 - fgrid[li] / (home[li] || 1));
-  const batScr      = pw[li] / (pw[li] + fgrid[li] + 0.001);
-  const firstAut    = autarky[0] / 100;
-  const progScr     = li > 0
-    ? Math.max(0, Math.min(1, (autarky[li]/100 - firstAut) / Math.max(0.01, 1 - firstAut)))
-    : 0.5;
-  const indepScore  = Math.round(Math.min(100, autScr*35 + gridFreeScr*30 + batScr*20 + progScr*15));
-  const scoreComponents = [
-    {lbl:'Autarkiegrad',       pct:Math.round(autScr*100),      col:'#10b981', weight:35},
-    {lbl:'Netzfreiheit',       pct:Math.round(gridFreeScr*100), col:'#06b6d4', weight:30},
-    {lbl:'Batterie-Resilienz', pct:Math.round(batScr*100),      col:'#a78bfa', weight:20},
-    {lbl:'Entwicklungs-Bonus', pct:Math.round(progScr*100),     col:'#f59e0b', weight:15},
-  ];
-
-  return {
-    yrs, lbls, solar, home, pw, fgrid, tgrid,
-    selfCons, solDirect, autarky, evq, co2, savings, feedRev, costWout, costWith,
-    mKwh, cumCO2, isMonthly, monthlyByYear,
-    fYears, fSolar, fToGrid, fAutark, fIsAct,
-    totalSolar:    +solar.reduce((a,b)=>a+b,0).toFixed(1),
-    totalSelfCons: +selfCons.reduce((a,b)=>a+b,0).toFixed(1),
-    totalHome:    +home.reduce((a,b)=>a+b,0).toFixed(1),
-    totalFeedin:  +tgrid.reduce((a,b)=>a+b,0).toFixed(1),
-    totalFeedRev: +feedRev.reduce((a,b)=>a+b,0).toFixed(0),
-    totalSav, avgAnnualSav, paybackYears, roiProgress,
-    totalCO2:  co2.reduce((a,b)=>a+b,0),
-    bestSolar: Math.max(...solar),
-    bestAutarky: Math.max(...autarky),
-    lastYear:  lastYr,
-    indepScore, scoreComponents,
-    lastEvq:   evq[li],
-    lastAut:   autarky[li],
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CHART.JS SHARED CONFIG  (Chart.defaults are set inside the lazy loader)
-// ═══════════════════════════════════════════════════════════════════════════
-const gCfg = {color:'rgba(51,65,85,.5)',drawBorder:false};
-const ttip = {mode:'index',intersect:false};
-const leg  = {position:'top',labels:{boxWidth:11,padding:14}};
-// graduated alpha per bar (single-series)
-const grad = (r,g,b,n) => Array.from({length:n},(_,i)=>`rgba(${r},${g},${b},${.2+.7*(i/(n-1||1))})`);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CHART REGISTRY
-// ═══════════════════════════════════════════════════════════════════════════
-let CH = {};
-function nukeCharts() {
-  if (_chartJsLoaded) Object.values(CH).forEach(c => { try { c.destroy(); } catch(e){} });
-  CH = {};
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PER-TAB CHART BUILDERS  (called lazily on first tab activation)
-// ═══════════════════════════════════════════════════════════════════════════
-function buildChartsForTab(tabId, d) {
-  if (builtTabs.has(tabId)) return;
-  const builders = {
-    erzeugung:   _buildErzeugungCharts,
-    verbrauch:   _buildVerbrauchCharts,
-    einspeisung: _buildEinspeisungCharts,
-    batterie:    _buildBatterieCharts,
-    vorteile:    _buildVorteileCharts,
-    zukunft:     _buildZukunftCharts,
-    klima:       _buildKlimaCharts,
-    vergleich:   _buildVergleichCharts,
-  };
-  if (builders[tabId]) {
-    _whenChartJs(() => {
-      if (!builtTabs.has(tabId)) { builders[tabId](d); builtTabs.add(tabId); }
-    });
-  }
-}
-
-function _buildErzeugungCharts(d) {
-  const {lbls,solar,selfCons,tgrid,autarky,evq} = d;
-  const n = lbls.length;
-  CH.s1 = new Chart(document.getElementById('c-solar-annual'),{type:'bar',
-    data:{labels:lbls,datasets:[{label:'Solar (MWh)',data:solar,
-      backgroundColor:grad(245,158,11,n),borderColor:'#f59e0b',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:ttip},scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-  buildMonthlyChart(d, d.yrs[d.yrs.length-1]);
-  CH.s3 = new Chart(document.getElementById('c-solar-balance'),{type:'bar',
-    data:{labels:lbls,datasets:[
-      {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
-      {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.7)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
-  CH.evq = new Chart(document.getElementById('c-evq'),{type:'bar',
-    data:{labels:lbls,datasets:[
-      {label:'Autarkie — Verbrauchsperspektive (%)',data:autarky,backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
-      {label:'Eigenverbrauchsquote — Erzeugerperspektive (%)',data:evq,backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
-}
-
-function _buildVerbrauchCharts(d) {
-  const {lbls,solDirect,pw,fgrid,autarky} = d;
-  CH.v1 = new Chart(document.getElementById('c-cons-stacked'),{type:'bar',
-    data:{labels:lbls,datasets:[
-      {label:'Solar direkt (MWh)',data:solDirect,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-      {label:'Powerwall (MWh)',data:pw,backgroundColor:'rgba(139,92,246,.75)',borderColor:'#8b5cf6',borderWidth:1,borderRadius:4},
-      {label:'Netz (MWh)',data:fgrid,backgroundColor:'rgba(239,68,68,.75)',borderColor:'#ef4444',borderWidth:1,borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
-  CH.v2 = new Chart(document.getElementById('c-autarky'),{type:'line',
-    data:{labels:lbls,datasets:[{label:'Autarkie (%)',data:autarky,
-      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',fill:true,tension:.4,
-      borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
-}
-
-function _buildEinspeisungCharts(d) {
-  const {lbls,selfCons,tgrid,feedRev} = d;
-  const n = lbls.length;
-  CH.e1 = new Chart(document.getElementById('c-feedin-annual'),{type:'bar',
-    data:{labels:lbls,datasets:[{label:'Einspeisung (MWh)',data:tgrid,
-      backgroundColor:grad(6,182,212,n),borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-  CH.e2 = new Chart(document.getElementById('c-feedin-vs-solar'),{type:'bar',
-    data:{labels:lbls,datasets:[
-      {label:'Eigenverbrauch (MWh)',data:selfCons,backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-      {label:'Einspeisung (MWh)',data:tgrid,backgroundColor:'rgba(6,182,212,.75)',borderColor:'#06b6d4',borderWidth:1,borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg}}}});
-  CH.e3 = new Chart(document.getElementById('c-feedin-revenue'),{type:'bar',
-    data:{labels:lbls,datasets:[{label:'Vergütung (€)',data:feedRev,
-      backgroundColor:'rgba(16,185,129,.7)',borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
-}
-
-function _buildBatterieCharts(d) {
-  const {lbls,pw,fgrid} = d;
-  const n = lbls.length;
-  CH.b1 = new Chart(document.getElementById('c-bat-annual'),{type:'bar',
-    data:{labels:lbls,datasets:[{label:'Powerwall (MWh)',data:pw,
-      backgroundColor:grad(139,92,246,n),borderColor:'#8b5cf6',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-  CH.b2 = new Chart(document.getElementById('c-bat-vs-grid'),{type:'line',
-    data:{labels:lbls,datasets:[
-      {label:'Powerwall (MWh)',data:pw,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#8b5cf6'},
-      {label:'Netzbezug (MWh)',data:fgrid,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-}
-
-function _buildVorteileCharts(d) {
-  const {lbls,selfCons,feedRev,costWout,costWith} = d;
-  CH.p1 = new Chart(document.getElementById('c-savings'),{type:'bar',
-    data:{labels:lbls,datasets:[
-      {label:'Eigenverbrauch-Ersparnis (€)',data:selfCons.map(sc=>+(sc*1000*(buyPrice/100)).toFixed(0)),backgroundColor:'rgba(245,158,11,.75)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-      {label:'Einspeisevergütung (€)',data:feedRev,backgroundColor:'rgba(16,185,129,.75)',borderColor:'#10b981',borderWidth:1,borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{stacked:true,grid:gCfg},y:{stacked:true,grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
-  CH.p2 = new Chart(document.getElementById('c-cost-cmp'),{type:'line',
-    data:{labels:lbls,datasets:[
-      {label:'Ohne Solar (€)',data:costWout,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#ef4444'},
-      {label:'Mit Solar (€)',data:costWith,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' €'}}}}});
-}
-
-function _buildZukunftCharts(d) {
-  const {fYears,fSolar,fIsAct} = d;
-  CH.z1 = new Chart(document.getElementById('c-forecast'),{type:'bar',
-    data:{labels:fYears.map(String),datasets:[
-      {label:'Ist-Wert (MWh)',data:fSolar.map((v,i)=>fIsAct[i]?v:null),backgroundColor:'rgba(245,158,11,.8)',borderColor:'#f59e0b',borderWidth:2,borderRadius:5},
-      {label:'Prognose (MWh)',data:fSolar.map((v,i)=>!fIsAct[i]?v:null),backgroundColor:'rgba(6,182,212,.5)',borderColor:'#06b6d4',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg,tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,min:0,title:{display:true,text:'MWh',color:'#94a3b8'}}}}});
-}
-
-function _buildKlimaCharts(d) {
-  const {lbls,co2,cumCO2} = d;
-  const n = lbls.length;
-  CH.k1 = new Chart(document.getElementById('c-co2-annual'),{type:'bar',
-    data:{labels:lbls,datasets:[{label:'CO₂ eingespart (kg)',data:co2,
-      backgroundColor:grad(16,185,129,n),borderColor:'#10b981',borderWidth:2,borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttip},
-      scales:{x:{grid:gCfg},y:{grid:gCfg}}}});
-  CH.k2 = new Chart(document.getElementById('c-co2-cum'),{type:'line',
-    data:{labels:lbls,datasets:[{label:'Kumuliert (kg)',data:cumCO2,
-      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.15)',fill:true,tension:.4,
-      borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#10b981'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{grid:gCfg},y:{grid:gCfg,ticks:{callback:v=>v+' kg'}}}}});
-}
-
-function _buildVergleichCharts(d) {
-  const metrics = [
-    {lbl:'Solar (MWh)',       arr:d.solar,   fmt:v=>de(v)+'MWh'},
-    {lbl:'Autarkie (%)',      arr:d.autarky, fmt:v=>de(v)+'%'},
-    {lbl:'EVQ (%)',           arr:d.evq,     fmt:v=>de(v)+'%'},
-    {lbl:'Einspeisung (MWh)',arr:d.tgrid,   fmt:v=>de(v)+'MWh'},
-  ];
-  const stats = metrics.map(m => {
-    const mx = Math.max(...m.arr);
-    return { normArr: m.arr.map(v => mx > 0 ? Math.round(v/mx*100) : 0) };
+  const Y = [...byYear.values()].sort((a, b) => a.year - b.year).map(y => {
+    const self = Math.max(0, y.solar - y.tgrid);
+    return {
+      ...y, self,
+      full: isMonthly ? new Set(y.months.map(m => m.month)).size === 12
+                      : y.year < thisYear && y.solar >= FULL_YEAR_SHARE * maxSolar,
+      direct: Math.max(0, y.home - y.pw - y.fgrid),
+      autarky: ratio(y.home - y.fgrid, y.home) * 100,
+      evq: ratio(self, y.solar) * 100,
+      co2: self * 1000 * CO2_KG,
+      savSelf: self * 1000 * BUY,
+      savFeed: y.tgrid * 1000 * SELL,
+      sav: self * 1000 * BUY + y.tgrid * 1000 * SELL,
+    };
   });
-  CH.radar = new Chart(document.getElementById('c-radar'), {
-    type:'radar',
-    data:{
-      labels: ['Solar (MWh)','Autarkie (%)','EVQ (%)','Einspeisung (MWh)','Powerwall (MWh)','Ersparnis (€)','CO₂ (kg)'],
-      datasets: d.yrs.map((yr,i)=>({
-        label: String(yr),
-        data: (() => {
-          const allMetrics = [
-            {arr:d.solar},{arr:d.autarky},{arr:d.evq},{arr:d.tgrid},
-            {arr:d.pw},{arr:d.savings},{arr:d.co2}
-          ];
-          return allMetrics.map(m => {
-            const mx = Math.max(...m.arr);
-            return mx > 0 ? Math.round(m.arr[i]/mx*100) : 0;
-          });
-        })(),
-        borderColor:          PCOLS[i%PCOLS.length],
-        backgroundColor:      PCOLS_A[i%PCOLS_A.length],
-        borderWidth:2, pointRadius:3,
-        pointBackgroundColor: PCOLS[i%PCOLS.length],
-      }))
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:leg, tooltip:ttip},
-      scales:{r:{
-        min:0, max:100,
-        ticks:{stepSize:25,callback:v=>v+'%',color:'#94a3b8',backdropColor:'transparent'},
-        grid:{color:'#334155'}, angleLines:{color:'#334155'},
-        pointLabels:{color:'#94a3b8',font:{size:10}}
-      }}
+
+  const fullYears = Y.filter(y => y.full);
+  const F = fullYears.length ? fullYears : Y;     // reference years for averages and records
+  const last = Y.at(-1), lf = F.at(-1), ff = F[0], pf = F.at(-2) || null;
+  const tot = Object.fromEntries(['solar','home','pw','fgrid','tgrid','self','co2','sav','savFeed'].map(k => [k, sum(Y, k)]));
+  const evqShare = ratio(sum(F, 'self'), sum(F, 'solar'));
+  const avg = {solar:mean(F, 'solar'), home:mean(F, 'home'), sav:mean(F, 'sav'), co2:mean(F, 'co2'), evq:evqShare * 100};
+
+  // Forecast: mean of full years, degrading from the last full year, constant self-consumption share
+  const project = year => {
+    const solar = avg.solar * (1 - DEGRADATION) ** (year - lf.year);
+    const self = solar * evqShare, tgrid = solar - self;
+    return {year, solar, self, tgrid, sav: self * 1000 * BUY + tgrid * 1000 * SELL, co2: self * 1000 * CO2_KG};
+  };
+  const runningYear = !last.full && last.year > lf.year ? last : null;
+  const fcRunning = runningYear && project(runningYear.year);
+  const horizon = Math.max(HORIZON, lf.year + 3);
+  const future = [];
+  for (let y = last.year + 1; y <= horizon; y++) future.push(project(y));
+
+  // Timeline of projected full-year values: actuals, running year topped up to its forecast, future years
+  const keys = ['solar','self','tgrid','sav','co2'];
+  const timeline = [
+    ...Y.map(y => y === runningYear
+      ? {year:y.year, kind:'running', ...Object.fromEntries(keys.map(k => [k, Math.max(y[k], fcRunning[k])]))}
+      : {...y, kind: y.full ? 'full' : 'partial'}),
+    ...future.map(f => ({...f, kind:'future'})),
+  ];
+  const proj = {sav: sum(timeline, 'sav'), co2: sum(timeline, 'co2')};
+
+  // Amortisation
+  let cum = 0, paybackYear = null;
+  for (const t of timeline) if ((cum += t.sav) >= cost && !paybackYear) paybackYear = t.year;
+  for (let y = horizon + 1; !paybackYear && y <= lf.year + 40; y++) if ((cum += project(y).sav) >= cost) paybackYear = y;
+  const roi = {
+    progress: Math.min(1, tot.sav / cost),
+    years: avg.sav > 0 ? cost / avg.sav : Infinity,
+    remaining: Math.max(0, cost - tot.sav),
+    paybackYear,
+  };
+
+  // Grid-independence score (last full year): autarky 65 %, storage coverage 20 %, progress 15 %
+  const parts = [
+    {m:'self', label:'Autarkie', w:65, v:lf.autarky / 100},
+    {m:'bat',  label:'Speicherdeckung', w:20, v:ratio(lf.pw, lf.pw + lf.fgrid)},
+    {m:'home', label:`Entwicklung seit ${ff.year}`, w:15,
+     v: F.length > 1 ? clamp((lf.autarky - ff.autarky) / Math.max(1, 100 - ff.autarky), 0, 1) : .5},
+  ];
+  const score = Math.round(parts.reduce((s, p) => s + p.v * p.w, 0));
+
+  return {Y, F, last, lf, ff, pf, tot, avg, evqShare, runningYear, fcRunning, future, horizon, timeline, proj,
+          roi, parts, score, isMonthly, project, buy, sell, cost};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SVG CHARTS — small, dependency-free renderer (bars: single/stacked/grouped, lines)
+// ═══════════════════════════════════════════════════════════════════════════
+const r1 = v => Math.round(v * 10) / 10;
+
+function ticks(lo, hi, count) {
+  if (hi <= lo) hi = lo + 1;
+  const raw = (hi - lo) / count, p = 10 ** Math.floor(Math.log10(raw)), e = raw / p;
+  const step = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * p;
+  const t = [];
+  for (let v = Math.floor(lo / step + 1e-9) * step; v <= hi + step * .999; v += step) t.push(+v.toFixed(10));
+  return {t, dec: Math.max(0, -Math.floor(Math.log10(step) + 1e-9))};
+}
+
+// Bar with 4px rounded data end, square at the baseline
+function barPath(x, yb, ye, w, r) {
+  const dir = ye < yb ? 1 : -1;
+  r = Math.min(r, Math.abs(yb - ye), w / 2);
+  [x, w, yb, ye] = [r1(x), r1(w), r1(yb), r1(ye)];
+  const yr = r1(ye + dir * r);
+  return `M${x},${yb}V${yr}Q${x},${ye} ${r1(x + r)},${ye}H${r1(x + w - r)}Q${r1(x + w)},${ye} ${r1(x + w)},${yr}V${yb}Z`;
+}
+
+const swatch = x => `<i class="sw m-${x.m}${x.model ? ' md' : ''}${x.type === 'line' ? ' ln' : ''}"></i>`;
+
+function legendHtml(s) {
+  const hasBars = s.series.some(x => x.type !== 'line');
+  const items = s.series.length > 1 || s.refs || s.series.some(x => x.model) ? s.series.map(x => `<li>${swatch(x)}${x.label}</li>`) : [];
+  if (s.styles?.includes('pt')) items.push(`<li><i class="sw m-home ${hasBars ? 'pt' : 'dot'}"></i>Teiljahr</li>`);
+  if (s.styles?.includes('md') && !s.series.some(x => x.model)) items.push('<li><i class="sw m-home ln md"></i>Prognose</li>');
+  return items.join('');
+}
+
+function drawChart(plot) {
+  const w = plot.clientWidth;
+  if (!w) return;
+  const def = CHARTS[plot.dataset.chart], s = def.spec(data, plot), fig = plot.parentNode;
+  s.unit ??= def.unit;
+  s.fmt ??= v => (s.signed ? signed(v, s.dec ?? 1) : num(v, s.dec ?? 1)) + NBSP + s.unit;
+  Object.assign(plot, {_w:w, _dirty:false, _s:s, _i:null, _g:null});
+
+  fig.querySelector('.legend').innerHTML = legendHtml(s);
+  const act = !def.act && fig.querySelector('.act'); // empty `act` = slot filled by the spec
+  if (act && act._html !== (s.action ?? '')) act.innerHTML = act._html = s.action ?? '';
+  if (act && s.actionValue != null) act.firstChild.value = s.actionValue;
+  if (s.empty) { plot.innerHTML = `<p class="empty">${s.empty}</p>`; plot.setAttribute('aria-label', `${def.title}: ${s.empty}`); return; }
+
+  const h = plot.clientHeight, n = s.labels.length;
+  const bars = s.series.filter(x => x.type !== 'line'), lines = s.series.filter(x => x.type === 'line');
+
+  // Domain (stacked bars sum per sign)
+  let lo = s.yMin ?? 0, hi = s.yMax ?? 0;
+  const take = v => { if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } };
+  for (let i = 0; i < n; i++) {
+    if (s.stacked) {
+      let p = 0, m = 0;
+      for (const b of bars) { const v = b.data[i] ?? 0; v > 0 ? p += v : m += v; }
+      take(p); take(m);
+    } else bars.forEach(b => take(b.data[i]));
+    lines.forEach(l => take(l.data[i]));
+  }
+  (s.refs || []).forEach(r => take(r.value));
+
+  const {t, dec} = ticks(lo, hi, h < 240 ? 4 : 5);
+  const tl = t.map(v => (s.signed && v > 0 ? '+' : '') + num(v, dec));
+  const padL = Math.ceil(Math.max(...tl.map(x => x.length)) * 6.4) + 10, padR = 4, padT = 8, padB = 24;
+  const iw = w - padL - padR, ih = h - padT - padB, t0 = t[0], t1 = t.at(-1);
+  const Y = v => padT + ih - (v - t0) / (t1 - t0) * ih;
+  const band = iw / n, cx = i => padL + band * (i + .5);
+  let out = '';
+
+  t.forEach((v, k) => {
+    const y = Math.round(Y(v)) + .5;
+    out += `<line class="${v === 0 ? 'bl' : 'gl'}" x1="${padL}" x2="${w - padR}" y1="${y}" y2="${y}"/>`
+         + `<text class="ax" x="${padL - 8}" y="${y}" dy=".32em" text-anchor="end">${tl[k]}</text>`;
+  });
+  out += `<rect class="hov" y="${padT}" width="${r1(band)}" height="${r1(ih)}" visibility="hidden"/>`;
+
+  // Bars: ≤24px thick, 2px surface gap between grouped bars and stacked segments
+  const groups = s.stacked ? 1 : bars.length, GAP = 2;
+  const bw = clamp((band * .7 - GAP * (groups - 1)) / groups, 2, 24);
+  for (let i = 0; i < n; i++) {
+    const x0 = cx(i) - (bw * groups + GAP * (groups - 1)) / 2;
+    let pos = 0, neg = 0;
+    bars.forEach((b, j) => {
+      const v = b.data[i];
+      if (!v) return;
+      const style = b.model ? 'md' : s.styles?.[i] || '';
+      let base = 0, x = x0 + j * (bw + GAP);
+      if (s.stacked) { x = x0; base = v > 0 ? pos : neg; v > 0 ? pos += v : neg += v; }
+      const top = !s.stacked || !bars.slice(j + 1).some(o => Math.sign(o.data[i] || 0) === Math.sign(v));
+      const yb = Y(base) - (base ? Math.sign(v) * GAP : 0), ye = Y(base + v);
+      if (Math.abs(yb - ye) < .5) return;
+      out += `<path class="b m-${b.m}${style ? ' ' + style : ''}" d="${barPath(x, yb, ye, bw, top ? 4 : 0)}"/>`;
+    });
+  }
+
+  // Lines: 2px, dashed into projected points, 10 % area wash, 8px markers with surface ring
+  for (const l of lines) {
+    const pts = l.data.map((v, i) => v == null ? null : [r1(cx(i)), r1(Y(v))]);
+    let solid = '', dashed = '';
+    for (let i = 1; i < n; i++) {
+      const a = pts[i - 1], b = pts[i];
+      if (!a || !b) continue;
+      const seg = `M${a}L${b}`;
+      s.styles?.[i] === 'md' ? dashed += seg : solid += seg;
     }
-  });
-  if (d.yrs.length >= 2) {
-    const yoyMetrics = [
-      {lbl:'Solar (MWh)',arr:d.solar},{lbl:'Autarkie (%)',arr:d.autarky},
-      {lbl:'EVQ (%)',arr:d.evq},{lbl:'Einspeisung (MWh)',arr:d.tgrid}
-    ];
-    CH.yoy = new Chart(document.getElementById('c-yoy'), {
-      type:'bar',
-      data:{
-        labels: d.yrs.slice(1).map((yr,i)=>`${d.yrs[i]}→${yr}`),
-        datasets: yoyMetrics.map((m,mi)=>({
-          label: m.lbl,
-          data:  m.arr.slice(1).map((v,i) => m.arr[i]>0 ? +((v/m.arr[i]-1)*100).toFixed(1) : 0),
-          backgroundColor: PCOLS[mi%PCOLS.length]+'99',
-          borderColor:     PCOLS[mi%PCOLS.length],
-          borderWidth:1, borderRadius:3,
-        }))
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:leg, tooltip:{...ttip, callbacks:{
-          label:ctx=>`${ctx.dataset.label}: ${ctx.raw>=0?'+':''}${ctx.raw}%`
-        }}},
-        scales:{
-          x:{grid:gCfg},
-          y:{grid:gCfg, ticks:{callback:v=>(v>=0?'+':'')+v+'%'}}
-        }
-      }
-    });
+    if (l.area) {
+      const p = pts.filter(Boolean), y0 = r1(Y(Math.max(0, t0)));
+      out += `<path class="ar m-${l.m}" d="M${p[0][0]},${y0}L${p.join('L')}L${p.at(-1)[0]},${y0}Z"/>`;
+    }
+    if (solid) out += `<path class="ln m-${l.m}" d="${solid}"/>`;
+    if (dashed) out += `<path class="ln md m-${l.m}" d="${dashed}"/>`;
+    pts.forEach((p, i) => { if (p) out += `<circle class="pt-m m-${l.m}${s.styles?.[i] ? ' o' : ''}" cx="${p[0]}" cy="${p[1]}" r="4"/>`; });
   }
-}
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MONTHLY CHART BUILDER  (real or simulated)
-// ═══════════════════════════════════════════════════════════════════════════
-function buildMonthlyChart(d, yr) {
-  if (CH.s2) try { CH.s2.destroy(); } catch(e){}
-  const selWrap = document.getElementById('month-sel-wrap');
-  const sub     = document.getElementById('monthly-chart-sub');
-
-  if (d.isMonthly) {
-    // Populate year selector
-    const sel = document.getElementById('month-year-sel');
-    sel.innerHTML = d.yrs.map(y => `<option value="${y}"${y===yr?' selected':''}>${y}</option>`).join('');
-    selWrap.style.display = 'flex';
-    sub.textContent = 'Echte Monatsdaten';
-
-    const mrows  = d.monthlyByYear[yr] || [];
-    const mSolar = Array(12).fill(0), mHome = Array(12).fill(0);
-    mrows.forEach(r => {
-      const m = r._month - 1;
-      if (m >= 0 && m < 12) { mSolar[m] = +(r.solar*1000).toFixed(0); mHome[m] = +(r.home*1000).toFixed(0); }
-    });
-    CH.s2 = new Chart(document.getElementById('c-solar-monthly'),{
-      type:'bar',
-      data:{labels:MONTH_LABELS,datasets:[
-        {label:`Solar ${yr} (kWh)`,data:mSolar,backgroundColor:MONTH_FACTORS.map(f=>`rgba(245,158,11,${.15+f*4.5})`),borderColor:'#f59e0b',borderWidth:1,borderRadius:4},
-        {label:`Verbrauch ${yr} (kWh)`,data:mHome,type:'line',borderColor:'#06b6d4',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#06b6d4',tension:.3}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:leg,tooltip:ttip},
-        scales:{x:{grid:gCfg},y:{grid:gCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}
-    });
-    // wire year selector
-    sel.onchange = () => { if (_derived) buildMonthlyChart(_derived, parseInt(sel.value)); };
-  } else {
-    selWrap.style.display = 'none';
-    const fullYrs = d.yrs.filter((_,i) => d.solar[i] > 5);
-    sub.textContent = fullYrs.length ? `kWh Ø ${fullYrs[0]}–${fullYrs[fullYrs.length-1]} (simuliert)` : 'kWh simuliert';
-    CH.s2 = new Chart(document.getElementById('c-solar-monthly'),{type:'bar',
-      data:{labels:MONTH_LABELS,datasets:[{label:'kWh',data:d.mKwh,
-        backgroundColor:MONTH_FACTORS.map(f=>`rgba(245,158,11,${.15+f*4.5})`),
-        borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{grid:gCfg},y:{grid:gCfg,title:{display:true,text:'kWh',color:'#94a3b8'}}}}});
+  for (const r of s.refs || []) {
+    const y = Math.round(Y(r.value)) + .5;
+    out += `<line class="ref" x1="${padL}" x2="${w - padR}" y1="${y}" y2="${y}"/>`
+         + `<text class="ref-l" x="${padL + 4}" y="${y - 6}">${r.label}</text>`;
   }
+
+  // X labels: short form or every n-th label when the band gets narrow
+  const width = arr => Math.max(...arr.map(x => x.length)) * 6.4;
+  const xl = s.short && width(s.labels) > band - 4 ? s.short : s.labels;
+  const every = Math.max(1, Math.ceil(width(xl) / (band - 2)));
+  xl.forEach((l, i) => { if (i % every === 0) out += `<text class="ax" x="${r1(cx(i))}" y="${h - 6}" text-anchor="middle">${l}</text>`; });
+
+  plot._g = {x0:padL, band, padT};
+  plot.innerHTML = `<svg width="${w}" height="${h}" aria-hidden="true">${out}</svg><div class="tip" hidden></div>`;
+  plot.setAttribute('aria-label', `${def.title} (${s.unit}): ` + s.labels.map((l, i) =>
+    `${l}${s.tags?.[i] ? ' ' + s.tags[i] : ''}: ` + s.series.filter(x => x.data[i] != null)
+      .map(x => (s.series.length > 1 ? x.label + ' ' : '') + s.fmt(x.data[i])).join(', ')).join('; '));
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// UPDATE UI
-// ═══════════════════════════════════════════════════════════════════════════
-const de = (n,dec=1) => (+n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-const PCOLS   = ['#f59e0b','#06b6d4','#a78bfa','#10b981','#f97316','#60a5fa','#f472b6'];
-const PCOLS_A = ['rgba(245,158,11,.15)','rgba(6,182,212,.15)','rgba(167,139,250,.15)',
-                 'rgba(16,185,129,.15)','rgba(249,115,22,.15)','rgba(96,165,250,.15)','rgba(244,114,182,.15)'];
-
-function updateKPIs(d) {
-  document.getElementById('kpi-solar').textContent    = de(d.totalSolar) + ' MWh';
-  document.getElementById('kpi-best').textContent     = de(d.bestSolar)  + ' MWh';
-  document.getElementById('kpi-savings').textContent  = de(d.totalSav,0) + ' €';
-  document.getElementById('kpi-autarky').textContent  = de(d.bestAutarky) + ' %';
-  document.getElementById('kpi-co2').textContent      = de(d.totalCO2,0) + ' kg';
-  document.getElementById('hdr-badge').textContent    = `Datenbasis: ${d.yrs[0]} – ${d.lastYear}`;
+function showTip(plot, i) {
+  const s = plot._s, g = plot._g;
+  if (!g) return;
+  i = clamp(i, 0, s.labels.length - 1);
+  if (i === plot._i) return;
+  plot._i = i;
+  const rows = s.series.filter(x => x.data[i] != null).map(x => `<li>${swatch(x)}${x.label}<b>${s.fmt(x.data[i])}</b></li>`);
+  if (s.stacked && rows.length > 1) rows.push(`<li class="sum">Gesamt<b>${s.fmt(s.series.reduce((a, x) => a + (x.data[i] || 0), 0))}</b></li>`);
+  const tip = plot.lastChild;
+  tip.innerHTML = `<p>${s.labels[i]}${s.tags?.[i] ? `<span class="tag">${s.tags[i]}</span>` : ''}</p><ul>${rows.join('')}</ul>`;
+  tip.hidden = false;
+  const hov = plot.querySelector('.hov');
+  hov.setAttribute('x', r1(g.x0 + g.band * i));
+  hov.setAttribute('visibility', 'visible');
+  const c = g.x0 + g.band * (i + .5), tw = tip.offsetWidth;
+  const left = c + 12 + tw > plot._w ? Math.max(0, c - 12 - tw) : c + 12;
+  tip.style.transform = `translate(${r1(left)}px,${g.padT}px)`;
 }
 
-function updateProgressBars(d) {
-  document.getElementById('prog-autarky').innerHTML = d.yrs.map((y,i)=>`
-    <div class="prog-item">
-      <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${d.autarky[i]} %</span></div>
-      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${d.autarky[i]}" aria-valuemin="0" aria-valuemax="100" aria-label="${y}: ${d.autarky[i]}% Autarkie" style="width:${Math.min(100,d.autarky[i])}%;background:${PCOLS[i%PCOLS.length]}"></div></div>
-    </div>`).join('');
-
-  document.getElementById('prog-battery').innerHTML = d.yrs.map((y,i)=>{
-    const pct = d.home[i] > 0 ? +(d.pw[i]/d.home[i]*100).toFixed(1) : 0;
-    return `<div class="prog-item">
-      <div class="prog-hdr"><span class="prog-lbl">${y}</span><span class="prog-val">${pct} % Powerwall-Anteil</span></div>
-      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${y}: ${pct}% Powerwall-Anteil" style="width:${Math.min(100,pct)}%;background:#8b5cf6"></div></div>
-    </div>`;}).join('');
-
-  const targets = [
-    {lbl:`CO₂-Spitzenjahr ${d.lastYear} (Ziel: 1.000 kg)`, v:d.co2[d.co2.length-1], max:1000, col:'#10b981'},
-    {lbl:'Autarkie-Rekord (Ziel: 95 %)',                    v:d.bestAutarky,          max:95,   col:'#06b6d4'},
-    {lbl:'Kumulierte Ersparnis (Ziel: 5.000 €)',            v:d.totalSav,             max:5000, col:'#f59e0b'},
-    {lbl:'CO₂ gesamt (Ziel: 4.000 kg)',                     v:d.totalCO2,             max:4000, col:'#8b5cf6'},
-  ];
-  document.getElementById('prog-climate').innerHTML = targets.map(g=>{
-    const pct = Math.min(100, g.v/g.max*100).toFixed(1);
-    return `<div class="prog-item">
-      <div class="prog-hdr"><span class="prog-lbl">${g.lbl}</span><span class="prog-val">${pct} %</span></div>
-      <div class="prog-track"><div class="prog-fill" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${g.lbl}: ${pct}% erreicht" style="width:${pct}%;background:${g.col}"></div></div>
-    </div>`;}).join('');
+function hideTip(plot) {
+  if (!plot?._g) return;
+  plot._i = null;
+  plot.lastChild.hidden = true;
+  plot.querySelector('.hov').setAttribute('visibility', 'hidden');
 }
 
-function updateTable(d) {
-  document.getElementById('ftbl-body').innerHTML = d.fYears.map((y,i)=>{
-    const sc  = Math.max(0, +(d.fSolar[i]-d.fToGrid[i]).toFixed(1));
-    const sav = +(sc*1000*(buyPrice/100) + d.fToGrid[i]*1000*(sellPrice/100)).toFixed(0);
-    const co2 = +(sc*1000*CO2_KG).toFixed(0);
-    const badge = d.fIsAct[i]
-      ? '<span class="bgt bgt-ist">Ist</span>'
-      : '<span class="bgt bgt-pro">Prognose</span>';
-    return `<tr><td><strong>${y}</strong></td><td>${badge}</td>
-      <td>${d.fSolar[i].toFixed(1)} MWh</td><td>${sc.toFixed(1)} MWh</td>
-      <td>${d.fAutark[i]} %</td><td>${sav.toLocaleString('de-DE')} €</td>
-      <td>${co2.toLocaleString('de-DE')} kg</td></tr>`;}).join('');
-}
+// ── Chart specs ────────────────────────────────────────────────────────────
+const tagOf = y => y.full ? '' : 'Teiljahr';
 
-function updateImpact(d) {
-  const trees   = Math.round(d.totalCO2 / TREE_CO2_KG);
-  const km      = Math.round(d.totalCO2 * 1000 / CAR_CO2_G_PER_KM);
-  const flights = (d.totalCO2 / FLIGHT_CO2_KG).toFixed(1).replace('.',',');
-  document.getElementById('ic-co2-total').textContent = de(d.totalCO2,0) + ' kg';
-  document.getElementById('ic-trees').textContent     = de(trees,0);
-  document.getElementById('ic-km').textContent        = de(km,0) + ' km';
-  document.getElementById('ic-flights').textContent   = flights + '×';
-  document.getElementById('ic-self').textContent      = de(d.totalSelfCons) + ' MWh';
-  document.getElementById('ic-total').textContent     = de(d.totalSolar) + ' MWh';
-}
-
-function updateEVQ(d) {
-  document.getElementById('evq-last').textContent    = de(d.lastEvq) + ' %';
-  document.getElementById('evq-autarky').textContent = de(d.lastAut) + ' %';
-}
-
-function updateScore(d) {
-  const s    = d.indepScore;
-  const circ = 2 * Math.PI * 42; // r=42 → 263.9
-  const arc  = document.getElementById('score-arc');
-  arc.style.strokeDashoffset = circ * (1 - s/100);
-  const col = s >= 85 ? '#10b981' : s >= 70 ? '#f59e0b' : s >= 55 ? '#f97316' : '#ef4444';
-  arc.style.stroke = col;
-  const numEl = document.getElementById('score-num');
-  numEl.textContent = s;
-  numEl.style.color = col;
-  const rating = s >= 90 ? '🏆 Herausragend' : s >= 80 ? '⭐ Ausgezeichnet' : s >= 70 ? '✅ Sehr gut' : s >= 55 ? '👍 Gut' : '⚠ Ausbaufähig';
-  document.getElementById('score-rating').textContent = rating;
-  document.getElementById('score-rating').style.color = col;
-  document.getElementById('score-breakdown').innerHTML = d.scoreComponents.map(c =>
-    `<div class="score-comp">
-      <span class="score-comp-lbl">${c.lbl}</span>
-      <div class="score-comp-bar"><div class="score-comp-fill" style="width:${c.pct}%;background:${c.col}"></div></div>
-      <span class="score-comp-val" style="color:${c.col}">${c.pct}%</span>
-    </div>`).join('');
-}
-
-function updateROI(d) {
-  const yr  = d.paybackYears < 999 ? d.paybackYears.toFixed(1) : '>50';
-  const pct = d.roiProgress.toFixed(1);
-  const remaining = d.paybackYears < 999
-    ? Math.max(0, (systemCost - d.totalSav) / d.avgAnnualSav).toFixed(1) + ' Jahre'
-    : 'nicht berechenbar';
-  document.getElementById('roi-content').innerHTML = `
-    <div class="roi-row"><span class="roi-lbl">Systemkosten (einstellbar oben)</span><span class="roi-val">${systemCost.toLocaleString('de-DE')} €</span></div>
-    <div class="roi-row"><span class="roi-lbl">Ø Ersparnis Vollbetriebsjahre</span><span class="roi-val">${d.avgAnnualSav.toLocaleString('de-DE')} €/Jahr</span></div>
-    <div class="roi-row"><span class="roi-lbl">Amortisationszeit</span><span class="roi-val" style="color:var(--amber)">${yr} Jahre</span></div>
-    <div class="roi-row"><span class="roi-lbl">Verbleibend bis Amortisation</span><span class="roi-val">${remaining}</span></div>
-    <div class="roi-row"><span class="roi-lbl">Bereits amortisiert</span><span class="roi-val" style="color:var(--green)">${pct} %</span></div>
-    <div style="margin-top:10px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">Amortisationsfortschritt</div>
-      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,d.roiProgress)}%;background:var(--amber);transition:width .8s"></div></div>
-    </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DYNAMIC STAT CARDS
-// ═══════════════════════════════════════════════════════════════════════════
-function card(lbl, val, sub, trend, col) {
-  return `<div class="card">
-    <div class="card-lbl">${lbl}</div>
-    <div class="card-val"${col ? ` style="color:${col}"` : ''}>${val}</div>
-    ${sub ? `<div class="card-sub">${sub}</div>` : ''}
-    ${trend || ''}
-  </div>`;
-}
-function badge(dir, txt) { return `<div class="badge-trend t-${dir}">${txt}</div>`; }
-
-function updateCards(d) {
-  const lastYear  = d.yrs[d.yrs.length - 1];
-  const lastSolar = d.solar[d.solar.length - 1];
-  const growth    = d.solar[0] > 0 ? Math.round((d.bestSolar / d.solar[0] - 1) * 100) : 0;
-  const bestSolarYrs = d.yrs.filter((_, i) => d.solar[i] === d.bestSolar).join(' & ');
-  const fullHome  = d.home.filter((_, i) => d.solar[i] > 5);
-  const avgHome   = fullHome.length ? fullHome.reduce((a,b)=>a+b,0)/fullHome.length : d.home[d.home.length-1];
-
-  document.getElementById('cards-erzeugung').innerHTML =
-    card('Gesamterzeugung', de(d.totalSolar)+' MWh', d.yrs[0]+' – '+lastYear+' (laufend)', badge('up','↑ Stabil')) +
-    card('Bestes Jahr', de(d.bestSolar)+' MWh', bestSolarYrs, badge('eq','= Plateau'), 'var(--cyan)') +
-    card(lastYear+' (lfd.)', de(lastSolar)+' MWh', 'Laufendes Jahr', badge('up','↑ Laufend'), 'var(--green)') +
-    card('Wachstum '+d.yrs[0]+'→'+(d.yrs[1]||d.yrs[0]), '+'+growth+' %', 'Erste(s) Jahr(e)', badge('up','↑ Aufbau'), 'var(--violet)');
-
-  const bestAutIdx  = d.autarky.indexOf(d.bestAutarky);
-  const bestAutYear = d.yrs[bestAutIdx];
-  const bestGrid    = d.fgrid[bestAutIdx];
-  document.getElementById('cards-verbrauch').innerHTML =
-    card('Gesamtverbrauch', de(d.totalHome)+' MWh', d.yrs[0]+' – '+lastYear+' gesamt') +
-    card('Autarkie '+bestAutYear, de(d.bestAutarky)+' %', 'Nur '+de(bestGrid*1000,0)+' kWh aus Netz', badge('up','↑ Jahresrekord'), 'var(--green)') +
-    card('Netzbezug '+bestAutYear, de(bestGrid*1000,0)+' kWh', 'Jahresminimum', badge('dn','↓ Minimum'), 'var(--cyan)') +
-    card('⌀ Jahresverbrauch', de(avgHome)+' MWh', 'Vollbetriebsjahre', '', 'var(--violet)');
-
-  const totalFeedin   = d.totalFeedin;
-  const totalFeedRev  = d.totalFeedRev;
-  const maxFeedin     = Math.max(...d.tgrid);
-  const bestFeedinIdx = d.tgrid.indexOf(maxFeedin);
-  const solarPos      = d.solar.filter(s=>s>0);
-  const avgFeedinRate = solarPos.length
-    ? d.solar.reduce((s,sol,i)=>s+(sol>0?d.tgrid[i]/sol:0),0) / solarPos.length * 100
-    : 0;
-  document.getElementById('cards-einspeisung').innerHTML =
-    card('Einspeisung gesamt', de(totalFeedin)+' MWh', d.yrs[0]+' – '+lastYear) +
-    card('Einspeisevergütung', de(totalFeedRev,0)+' €', '@ '+sellPrice+' ct/kWh', badge('up','↑ Passives Einkommen'), 'var(--green)') +
-    card('Spitzenjahr', de(maxFeedin)+' MWh', String(d.yrs[bestFeedinIdx]), '', 'var(--cyan)') +
-    card('Einspeiserate ⌀', Math.round(avgFeedinRate)+' %', 'der Erzeugung', '', 'var(--violet)');
-
-  const totalPW   = d.pw.reduce((a,b)=>a+b,0);
-  const maxPW     = Math.max(...d.pw);
-  const bestPWIdx = d.pw.indexOf(maxPW);
-  const avgPWShare = d.pw.reduce((s,p,i)=>s+(d.home[i]>0?p/d.home[i]:0),0) / d.pw.length * 100;
-  const pwSavings  = Math.round(totalPW * 1000 * (buyPrice / 100));
-  document.getElementById('cards-batterie').innerHTML =
-    card('Gesamt aus Powerwall', de(totalPW)+' MWh', d.yrs[0]+' – '+lastYear) +
-    card('Spitzenjahr', de(maxPW)+' MWh', String(d.yrs[bestPWIdx]), badge('up','↑ Zunehmend'), 'var(--violet)') +
-    card('Powerwall-Anteil ⌀', '~'+Math.round(avgPWShare)+' %', 'des Haushaltsverbrauchs', '', 'var(--cyan)') +
-    card('Netzbezug ersetzt', '~'+de(pwSavings,0)+' €', de(totalPW)+' MWh × '+buyPrice+' ct', badge('up','↑ Steigend'), 'var(--green)');
-
-  document.getElementById('bc-total-sav').textContent    = de(d.totalSav,0)+' €';
-  document.getElementById('bc-total-co2').textContent    = de(d.totalCO2,0)+' kg';
-  document.getElementById('bc-best-autarky').textContent = de(d.bestAutarky)+' %';
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FULL REFRESH
-// ═══════════════════════════════════════════════════════════════════════════
-function _buildLazyTabContent(id, d) {
-  if (id === 'vergleich') buildComparisonTab(d);
-  if (id === 'zukunft')   updateTable(d);
-}
-
-function refreshAll(rows) {
-  currentRows = rows;
-  _derived = null;
-  const d = derive(rows);
-  _derived = d;
-  nukeCharts();
-  builtTabs.clear();
-  updateKPIs(d);
-  updateProgressBars(d);
-  updateImpact(d);
-  updateEVQ(d);
-  updateScore(d);
-  updateROI(d);
-  updateCards(d);
-  // Rebuild content for any lazy tabs already visited
-  _builtDomContent.forEach(id => _buildLazyTabContent(id, d));
-  // Preload chart.js in background while browser renders first frame
-  _loadChartJs();
-  const activePaneId = document.querySelector('.pane.active')?.id ?? 'pane-erzeugung';
-  requestAnimationFrame(() => buildChartsForTab(activePaneId.replace('pane-', ''), d));
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PRICE BAR — live recalculation on input change (debounced 300 ms)
-// ═══════════════════════════════════════════════════════════════════════════
-function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
-function onPriceChange() { if (currentRows) refreshAll(currentRows); }
-const debouncedPriceChange = debounce(onPriceChange, 300);
-document.getElementById('inp-buy').addEventListener('input', e => {
-  buyPrice = parseFloat(e.target.value) || 30; debouncedPriceChange();
-});
-document.getElementById('inp-sell').addEventListener('input', e => {
-  sellPrice = parseFloat(e.target.value) || 8; debouncedPriceChange();
-});
-document.getElementById('inp-cost').addEventListener('input', e => {
-  systemCost = parseFloat(e.target.value) || 15000; debouncedPriceChange();
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════════════════════════════════
-let toastTimer;
-function showToast(msg, isErr=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.toggle('err', isErr);
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FILE UPLOAD  (button click + drag-and-drop)
-// ═══════════════════════════════════════════════════════════════════════════
-function loadFile(file) {
-  if (!file) return;
-  if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-    showToast('⚠ Bitte eine .csv-Datei wählen', true); return;
-  }
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const rows = parseCSV(ev.target.result);
-      refreshAll(rows);
-      const uniqYrs = [...new Set(rows.map(r=>r.year))];
-      showToast(`✓ ${uniqYrs.length} Jahre geladen (${Math.min(...uniqYrs)}–${Math.max(...uniqYrs)})`);
-    } catch(err) { showToast('⚠ ' + err.message, true); }
+function yearly(d, series, opts = {}) {
+  return {
+    labels: d.Y.map(y => String(y.year)),
+    tags: d.Y.map(tagOf),
+    styles: d.Y.map(y => y.full ? '' : 'pt'),
+    series: series.map(x => ({...x, data: d.Y.map(y => y[x.k])})),
+    ...opts,
   };
-  reader.readAsText(file);
 }
 
-document.getElementById('csv-file').addEventListener('change', e => {
+function cumulative(d, k, m, label, extend = 0) {
+  const T = [...d.timeline];
+  for (let y = d.horizon + 1; y <= extend; y++) T.push({...d.project(y), kind:'future'});
+  let c = 0;
+  return {
+    labels: T.map(t => String(t.year)),
+    tags: T.map(t => ({partial:'Teiljahr', running:'Hochrechnung', future:'Prognose'})[t.kind] || ''),
+    styles: T.map(t => t.kind === 'running' || t.kind === 'future' ? 'md' : ''),
+    series: [{m, label, type:'line', area:true, data: T.map(t => c += t[k])}],
+    dec: 0,
+  };
+}
+
+function monthSpec(d, plot) {
+  if (!d.isMonthly) return {
+    labels: MONTHS, short: MONTHS.map(m => m[0]), dec: 0,
+    series: [{m:'solar', label:`Modell: Ø-Volljahr ${span(d.F)}`, model:true, data: MONTH_SHARE.map(f => f * d.avg.solar * 1000)}],
+  };
+  const years = d.Y.map(y => y.year);
+  const year = years.includes(plot._year) ? plot._year : years.at(-1);
+  const solar = Array(12).fill(null), home = Array(12).fill(null);
+  for (const r of d.Y.find(y => y.year === year).months) { solar[r.month - 1] = r.solar * 1000; home[r.month - 1] = r.home * 1000; }
+  return {
+    labels: MONTHS, short: MONTHS.map(m => m[0]), dec: 0,
+    series: [{m:'solar', label:'Erzeugung', data:solar}, {m:'home', label:'Verbrauch', type:'line', data:home}],
+    action: `<select class="sel" data-month aria-label="Jahr">${years.map(y => `<option>${y}</option>`).join('')}</select>`,
+    actionValue: year,
+  };
+}
+
+function forecastSpec(d) {
+  const rows = [...d.Y, ...d.future];
+  return {
+    labels: rows.map(y => String(y.year)),
+    tags: rows.map(y => y.full ? '' : y === d.runningYear ? 'Teiljahr + Prognose' : 'months' in y ? 'Teiljahr' : 'Prognose'),
+    styles: rows.map(y => y.full || !('months' in y) ? '' : 'pt'),
+    stacked: true,
+    series: [
+      {m:'solar', label:'Ist', data: rows.map(y => 'months' in y ? y.solar : null)},
+      {m:'solar', label:'Prognose', model:true, data: rows.map(y =>
+        y === d.runningYear ? Math.max(0, d.fcRunning.solar - y.solar) : 'months' in y ? null : y.solar)},
+    ],
+  };
+}
+
+function yoySpec(d) {
+  if (d.F.length < 2 || d.F.some(y => !y.full)) return {empty:'Für den Vorjahresvergleich sind mindestens zwei Volljahre nötig.', series:[]};
+  const pairs = d.F.slice(1).map((y, i) => [d.F[i], y]);
+  const ch = k => pairs.map(([a, b]) => a[k] ? (b[k] / a[k] - 1) * 100 : null);
+  return {
+    labels: pairs.map(([a, b]) => `${a.year}→${b.year}`),
+    short: pairs.map(([a, b]) => `${String(a.year).slice(2)}→${String(b.year).slice(2)}`),
+    signed: true,
+    series: [
+      {m:'solar', label:'Erzeugung', data:ch('solar')},
+      {m:'self', label:'Eigenverbrauch', data:ch('self')},
+      {m:'feed', label:'Einspeisung', data:ch('tgrid')},
+      {m:'grid', label:'Netzbezug', data:ch('fgrid')},
+    ],
+  };
+}
+
+const CHARTS = {
+  solar:    {title:'Jahreserzeugung', unit:'MWh', spec: d => yearly(d, [{m:'solar', label:'Erzeugung', k:'solar'}])},
+  month:    {title:'Monatsverlauf', unit:'kWh', act:'', spec: monthSpec},
+  balance:  {title:'Verwendung der Erzeugung', unit:'MWh', spec: d => yearly(d, [
+              {m:'self', label:'Eigenverbrauch', k:'self'}, {m:'feed', label:'Einspeisung', k:'tgrid'}], {stacked:true})},
+  sources:  {title:'Deckung des Verbrauchs', unit:'MWh', spec: d => yearly(d, [
+              {m:'solar', label:'Solar direkt', k:'direct'}, {m:'bat', label:'Powerwall', k:'pw'}, {m:'grid', label:'Netz', k:'fgrid'}], {stacked:true, dec:2})},
+  rates:    {title:'Autarkie & Eigenverbrauchsquote', unit:'%', spec: d => yearly(d, [
+              {m:'self', label:'Autarkie', k:'autarky', type:'line'}, {m:'solar', label:'Eigenverbrauchsquote', k:'evq', type:'line'}], {yMax:100})},
+  battery:  {title:'Powerwall-Entladung', unit:'MWh', spec: d => yearly(d, [{m:'bat', label:'Powerwall', k:'pw'}], {dec:2})},
+  exchange: {title:'Netzaustausch', unit:'MWh', spec: d => yearly(d, [
+              {m:'feed', label:'Einspeisung', k:'tgrid'}, {m:'grid', label:'Netzbezug', k:'fgrid'}], {dec:2})},
+  savings:  {title:'Ersparnis je Jahr', unit:'€', price:true, spec: d => yearly(d, [
+              {m:'self', label:'Eigenverbrauch', k:'savSelf'}, {m:'feed', label:'Einspeisevergütung', k:'savFeed'}], {stacked:true, dec:0})},
+  payback:  {title:'Amortisation', unit:'€', price:true, act:'<button class="link" data-open="in-cost">Kosten anpassen</button>',
+             spec: d => ({...cumulative(d, 'sav', 'money', 'Ersparnis kumuliert', Math.min(d.roi.paybackYear || 0, d.lf.year + 25)),
+                          refs:[{value:d.cost, label:`Anlagekosten ${eur(d.cost)}`}]})},
+  co2:      {title:'CO₂-Einsparung je Jahr', unit:'kg', spec: d => yearly(d, [{m:'co2', label:'CO₂ vermieden', k:'co2'}], {dec:0})},
+  co2cum:   {title:'CO₂ kumuliert inkl. Prognose', unit:'kg', spec: d => cumulative(d, 'co2', 'co2', 'CO₂ kumuliert')},
+  forecast: {title:'Erzeugung: Ist & Prognose', unit:'MWh', spec: forecastSpec},
+  yoy:      {title:'Veränderung zum Vorjahr', unit:'%', spec: yoySpec},
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEW COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+const stat = (m, label, [v, u = ''], sub = '', delta = '') =>
+  `<div class="stat m-${m}"><p class="stat-l">${label}</p><p class="stat-v">${v}${u ? `<small>${u}</small>` : ''}</p>`
+  + (sub ? `<p class="stat-s">${sub}</p>` : '') + delta + '</div>';
+
+// Change vs. previous full year; colour follows whether the direction is desirable
+function delta(cur, prev, ref, {pp = false, better = 'up'} = {}) {
+  if (prev == null || (!pp && !prev)) return '';
+  const diff = pp ? cur - prev : (cur / prev - 1) * 100;
+  const flat = Math.abs(diff) < .05;
+  const st = flat ? '' : (diff > 0) === (better === 'up') ? 'pos' : 'neg';
+  return `<p class="delta${st ? ' st-' + st : ''}">${flat ? '→' : diff > 0 ? '↑' : '↓'} ${signed(diff)}${NBSP}${pp ? 'Pp.' : '%'}<span>ggü. ${ref}</span></p>`;
+}
+
+const meter = p => `<div class="meter m-${p.m}"><span>${p.label} <small>${p.w}${NBSP}%</small></span><b>${pct(p.v * 100, 0)}</b><i style="--v:${p.v.toFixed(3)}"></i></div>`;
+const icon = id => `<svg class="i" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+function scoreHtml(d) {
+  const s = d.score, st = s >= 85 ? 'pos' : s >= 70 ? 'warn' : 'neg';
+  const rating = s >= 90 ? 'Herausragend' : s >= 80 ? 'Ausgezeichnet' : s >= 70 ? 'Sehr gut' : s >= 55 ? 'Gut' : 'Ausbaufähig';
+  return `<div class="ring st-${st}" style="--p:${s / 100}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="42"/><circle class="vl" cx="50" cy="50" r="42"/></svg><b aria-hidden="true">${s}</b></div>`
+    + `<div class="score-body"><p class="eyebrow">Netz-Unabhängigkeit ${d.lf.year}</p><p class="score-r">${rating} <span class="sr-only">– ${s} von 100 Punkten</span></p>`
+    + `<div class="meters">${d.parts.map(meter).join('')}</div></div>`;
+}
+
+function benefitsHtml(d) {
+  const items = [
+    ['lock', 'Preisstabilität', `${pct(d.lf.autarky, 0)} des Verbrauchs ${d.lf.year} sind vom Strompreis entkoppelt.`],
+    ['shield', 'Notstrom', 'Die Powerwall versorgt den Haushalt bei Netzausfall, typisch ~18–24 h.'],
+    ['building', 'Immobilienwert', 'PV mit Speicher steigert den Marktwert typischerweise um 5–10 %.'],
+  ];
+  return `<h3>Weitere Vorteile</h3><ul class="list">${items.map(([i, t, x]) => `<li>${icon(i)}<b>${t}</b><span>${x}</span></li>`).join('')}</ul>`;
+}
+
+function tableHtml(d) {
+  const cols = [['solar','Erzeugung','MWh',1], ['self','Eigenverbr.','MWh',1], ['tgrid','Einspeisung','MWh',1], ['pw','Powerwall','MWh',2],
+                ['fgrid','Netzbezug','MWh',2], ['autarky','Autarkie','%',1], ['sav','Ersparnis','€',0], ['co2','CO₂','kg',0]];
+  const full = d.Y.filter(y => y.full);
+  const top = Object.fromEntries(cols.map(([k,,, dec]) =>
+    [k, full.length > 1 ? num(best(full, k, k === 'fgrid')[k], dec) : null]));
+  const row = (y, tag) => `<tr${tag === 'Prognose' ? ' class="fc"' : ''}><td>${y.year}${tag ? `<span class="tag">${tag}</span>` : ''}</td>`
+    + cols.map(([k,,, dec]) => {
+      if (y[k] == null) return '<td>–</td>';
+      const v = num(y[k], dec);
+      return `<td${y.full && v === top[k] ? ' class="best"' : ''}>${v}</td>`;
+    }).join('') + '</tr>';
+  return `<h3>Jahresübersicht</h3><div class="tbl-wrap"><table class="tbl"><caption class="sr-only">Kennzahlen je Jahr, Ist und Prognose</caption>`
+    + `<thead><tr><th scope="col">Jahr</th>${cols.map(([, l, u]) => `<th scope="col">${l}<small>${u}</small></th>`).join('')}</tr></thead>`
+    + `<tbody>${d.Y.map(y => row(y, tagOf(y))).join('')}${d.future.map(f => row(f, 'Prognose')).join('')}</tbody></table></div>`
+    + `<p class="note">Fett: Bestwert der Volljahre · Prognose ohne Speicher-, Netz- und Autarkiewerte</p>`;
+}
+
+const li = ([t, x]) => `<li><strong>${t}:</strong> ${x}</li>`;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEWS — layout, stats and insights per tab
+// ═══════════════════════════════════════════════════════════════════════════
+const VIEWS = {
+  erzeugung: {
+    label: 'Erzeugung',
+    layout: ['stats', ['solar', 'balance'], ['month'], 'insights'],
+    stats: d => {
+      const top = best(d.F, 'solar'), ru = d.runningYear;
+      return [
+        stat('solar', 'Erzeugung gesamt', energy(d.tot.solar), span(d.Y)),
+        stat('solar', 'Ø pro Volljahr', energy(d.avg.solar), span(d.F)),
+        stat('solar', 'Bestes Jahr', energy(top.solar), d.F.filter(y => num(y.solar) === num(top.solar)).map(y => y.year).join(' & ')),
+        ru ? stat('solar', `${ru.year} bisher`, energy(ru.solar), `${pct(ratio(ru.solar, d.avg.solar) * 100, 0)} eines Ø-Volljahres`)
+           : stat('solar', `Erzeugung ${d.lf.year}`, energy(d.lf.solar), '', delta(d.lf.solar, d.pf?.solar, d.pf?.year)),
+      ];
+    },
+    insights: d => {
+      const out = [], first = d.Y[0], lo = best(d.F, 'solar', true), hi = best(d.F, 'solar');
+      if (!first.full) out.push(['Inbetriebnahme', `${first.year} lieferte ${E(first.solar)} – ein Teiljahr, daher nicht mit Volljahren vergleichbar.`]);
+      if (d.F.length > 1) out.push(['Stabilität', `Die Volljahre ${span(d.F)} liegen zwischen ${E(lo.solar)} und ${E(hi.solar)} (Ø ${E(d.avg.solar)}), eine Spanne von ${pct(ratio(hi.solar - lo.solar, d.avg.solar) * 100)}.`]);
+      if (d.runningYear) out.push(['Laufendes Jahr', `${d.runningYear.year} bisher ${E(d.runningYear.solar)}; die Prognose für das Gesamtjahr liegt bei ~${E(d.fcRunning.solar)}.`]);
+      if (d.isMonthly) {
+        const m = MONTHS.map((_, i) => d.F.reduce((s, y) => s + sum(y.months.filter(r => r.month === i + 1), 'solar'), 0));
+        const share = ratio(m.slice(3, 9).reduce((a, b) => a + b, 0), m.reduce((a, b) => a + b, 0)) * 100;
+        out.push(['Saisonalität', `${pct(share, 0)} des Ertrags fallen April–September an; stärkster Monat ist ${new Intl.DateTimeFormat('de-DE', {month:'long'}).format(new Date(2000, m.indexOf(Math.max(...m))))}.`]);
+      } else out.push(['Saisonalität', 'Ohne Monatsdaten zeigt der Monatsverlauf ein Modell: ~71 % des Ertrags fallen April–September an, Juni ist am stärksten.']);
+      out.push(['Verwendung', `Im Schnitt werden ${pct(d.avg.evq, 0)} der Erzeugung selbst genutzt und ${pct(100 - d.avg.evq, 0)} eingespeist.`]);
+      return out;
+    },
+  },
+
+  verbrauch: {
+    label: 'Verbrauch',
+    layout: ['stats', 'score', ['sources', 'rates'], 'insights'],
+    stats: ({tot, Y, lf, pf}) => [
+      stat('home', 'Verbrauch gesamt', energy(tot.home), span(Y)),
+      stat('self', `Autarkie ${lf.year}`, [num(lf.autarky), '%'], '', delta(lf.autarky, pf?.autarky, pf?.year, {pp:true})),
+      stat('solar', `Eigenverbrauchsquote ${lf.year}`, [num(lf.evq), '%'], '', delta(lf.evq, pf?.evq, pf?.year, {pp:true})),
+      stat('grid', `Netzbezug ${lf.year}`, energy(lf.fgrid), `${pct(ratio(lf.fgrid, lf.home) * 100)} des Verbrauchs`,
+           delta(lf.fgrid, pf?.fgrid, pf?.year, {better:'down'})),
+    ],
+    insights: d => {
+      const {lf, ff, F} = d, out = [];
+      if (F.length > 1) out.push(['Autarkie', `Von ${pct(ff.autarky)} (${ff.year}) auf ${pct(lf.autarky)} (${lf.year}), ${signed(lf.autarky - ff.autarky)} Prozentpunkte.`]);
+      out.push(['Herkunft', `${lf.year} kamen ${pct(ratio(lf.direct, lf.home) * 100, 0)} des Verbrauchs direkt vom Dach, ${pct(ratio(lf.pw, lf.home) * 100, 0)} aus der Powerwall und ${pct(ratio(lf.fgrid, lf.home) * 100, 0)} aus dem Netz.`]);
+      out.push(['Verbrauch', `Ø ${E(d.avg.home)} pro Volljahr, Spanne ${E(best(F, 'home', true).home)}–${E(best(F, 'home').home)}.`]);
+      out.push(['Score', `Der Unabhängigkeits-Score gewichtet Autarkie (65 %), Speicherdeckung – den Anteil der Powerwall am Nicht-Solar-Bezug (20 %) – und die Entwicklung seit ${ff.year} (15 %).`]);
+      return out;
+    },
+  },
+
+  speicher: {
+    label: 'Speicher & Netz',
+    layout: ['stats', ['battery', 'exchange'], 'insights'],
+    stats: ({tot, Y, F}) => [
+      stat('bat', 'Powerwall gesamt', energy(tot.pw), `Ø ${pct(ratio(sum(F, 'pw'), sum(F, 'home')) * 100, 0)} des Verbrauchs`),
+      stat('feed', 'Einspeisung gesamt', energy(tot.tgrid), `${pct(ratio(tot.tgrid, tot.solar) * 100, 0)} der Erzeugung`),
+      stat('grid', 'Netzbezug gesamt', energy(tot.fgrid), span(Y)),
+      stat(tot.tgrid >= tot.fgrid ? 'feed' : 'grid', 'Netzsaldo', energy(Math.abs(tot.tgrid - tot.fgrid)),
+           tot.tgrid >= tot.fgrid ? 'mehr eingespeist als bezogen' : 'mehr bezogen als eingespeist'),
+    ],
+    insights: d => {
+      const {tot, lf, ff, F} = d, rate = ratio(tot.tgrid, tot.solar) * 100, out = [];
+      out.push(['Überschuss', `${pct(rate, 0)} der Erzeugung gehen ins Netz – ${E(tot.tgrid)}, rechnerisch der Jahresbedarf von ~${num(tot.tgrid / HOUSEHOLD_MWH, 0)} Haushalten (je ${num(HOUSEHOLD_MWH)} MWh).`]);
+      if (F.length > 1) out.push(['Speicherwirkung', `Die Powerwall-Entladung stieg von ${E(ff.pw)} (${ff.year}) auf ${E(lf.pw)} (${lf.year}); der Netzbezug lag zuletzt bei ${E(lf.fgrid)}.`]);
+      if (tot.fgrid > 0) out.push(['Netzsaldo', `Eingespeist wurde ${num(tot.tgrid / tot.fgrid, 1)}× so viel Energie wie bezogen.`]);
+      if (rate > 50) out.push(['Potenzial', 'Ein größerer Speicher, ein E-Auto oder eine Wärmepumpe würden Überschüsse selbst nutzen, statt sie günstig einzuspeisen.']);
+      return out;
+    },
+  },
+
+  finanzen: {
+    label: 'Finanzen',
+    layout: ['stats', ['savings', 'payback'], 'benefits', 'insights'],
+    stats: ({tot, avg, roi, Y, F, sell}) => [
+      stat('money', 'Ersparnis gesamt', [num(tot.sav, 0), '€'], span(Y)),
+      stat('money', 'Ø pro Volljahr', [num(avg.sav, 0), '€'], span(F)),
+      stat('feed', 'Einspeisevergütung', [num(tot.savFeed, 0), '€'], `bei ${ct(sell)} ct/kWh`),
+      stat('money', 'Amortisationszeit', Number.isFinite(roi.years) ? [num(roi.years), 'Jahre'] : ['–'],
+           roi.paybackYear ? `voraussichtlich ${roi.paybackYear}` : 'nicht absehbar'),
+    ],
+    insights: d => {
+      const {roi, avg, tot, cost} = d, out = [];
+      if (Number.isFinite(roi.years)) out.push(['Amortisation', `Bei ${eur(cost)} Anlagekosten und Ø ${eur(avg.sav)} Ersparnis pro Volljahr rechnet sich die Anlage nach ~${num(roi.years)} Jahren${roi.paybackYear ? `, voraussichtlich ${roi.paybackYear}` : ''} – ohne Förderung.`]);
+      out.push(['Stand', `Bisher ${eur(tot.sav)} erwirtschaftet, das sind ${pct(roi.progress * 100, 0)} der Anlagekosten${roi.remaining ? `; offen sind ${eur(roi.remaining)}` : ''}.`]);
+      if (d.sell > 0) out.push(['Eigenverbrauch lohnt', `Eine selbst genutzte kWh spart ${ct(d.buy)} ct, eine eingespeiste bringt ${ct(d.sell)} ct – Eigenverbrauch ist ${num(d.buy / d.sell)}× so viel wert.`]);
+      out.push(['Förderung', 'KfW-Kredit 270, EEG-Vergütung und der Nullsteuersatz auf PV-Anlagen (seit 2023) verkürzen die Amortisation.']);
+      return out;
+    },
+  },
+
+  klima: {
+    label: 'Klima',
+    layout: ['stats', ['co2', 'co2cum'], 'insights'],
+    stats: ({tot}) => [
+      stat('co2', 'CO₂ vermieden', [num(tot.co2, 0), 'kg'], `aus ${E(tot.self)} Eigenverbrauch`),
+      stat('co2', 'Baum-Jahre', [num(tot.co2 / TREE_KG, 0)], `1 Baum bindet ~${TREE_KG} kg CO₂/Jahr`),
+      stat('co2', 'Auto-Kilometer', [num(tot.co2 * 1000 / CAR_G_KM, 0), 'km'], `Pkw mit ${CAR_G_KM} g CO₂/km`),
+      stat('co2', 'Langstreckenflüge', [num(tot.co2 / FLIGHT_KG), '×'], `FRA–JFK, ~${num(FLIGHT_KG, 0)} kg CO₂`),
+    ],
+    insights: d => {
+      const top = best(d.F, 'co2');
+      return [
+        ['Entwicklung', `Die Volljahre sparen Ø ${kg(d.avg.co2)} CO₂ pro Jahr, am meisten ${top.year} mit ${kg(top.co2)}.`],
+        ['Netz-Bonus', `Die eingespeisten ${E(d.tot.tgrid)} verdrängen zusätzlich ~${num(d.tot.tgrid * CO2_KG)} t CO₂ im Strommix – nicht in dieser Bilanz enthalten.`],
+        ['Ausblick', `Bis ${d.horizon} summiert sich die Einsparung auf ~${kg(d.proj.co2)}.`],
+        ['Methodik', `Bewertet wird nur der Eigenverbrauch mit dem deutschen Strommix-Faktor von ${num(CO2_KG * 1000, 0)} g CO₂/kWh (UBA 2023).`],
+      ];
+    },
+  },
+
+  trends: {
+    label: 'Trends & Prognose',
+    layout: ['stats', ['forecast', 'yoy'], 'table', 'insights'],
+    stats: d => {
+      const {runningYear: ru, fcRunning, future, horizon, proj} = d;
+      return [
+        ru ? stat('solar', `Hochrechnung ${ru.year}`, energy(fcRunning.solar), `bisher ${E(ru.solar)}`)
+           : stat('solar', `Prognose ${future[0].year}`, energy(future[0].solar), `${pct(DEGRADATION * 100)} Degradation/Jahr`),
+        stat('solar', `Prognose ${span(future)}`, energy(sum(future, 'solar')), `${future.length} Jahre`),
+        stat('money', `Ersparnis bis ${horizon}`, [num(proj.sav, 0), '€'], 'kumuliert inkl. Ist'),
+        stat('co2', `CO₂ bis ${horizon}`, [num(proj.co2, 0), 'kg'], 'kumuliert inkl. Ist'),
+      ];
+    },
+    insights: d => [
+      ['Prognosebasis', `Ø der Volljahre (${E(d.avg.solar)}) mit ${pct(DEGRADATION * 100)} Moduldegradation pro Jahr und konstanter Eigenverbrauchsquote von ${pct(d.avg.evq, 0)}.`],
+      ['Bestwerte', `Höchste Erzeugung ${best(d.F, 'solar').year}, höchste Autarkie ${best(d.F, 'autarky').year} (${pct(best(d.F, 'autarky').autarky)}), geringster Netzbezug ${best(d.F, 'fgrid', true).year}.`],
+      ['Hebel Speicher', 'Eine zweite Powerwall hebt die Autarkie Richtung 97–98 % und überbrückt Winterabende.'],
+      ['Hebel E-Mobilität', 'Solarladen erhöht den Eigenverbrauch um 1.500–3.000 kWh pro Jahr.'],
+      ['Hebel Pflege', 'Reinigung und Monitoring sichern 2–5 % Mehrertrag ohne Investition.'],
+    ],
+  },
+};
+
+const BLOCKS = {
+  stats:    (el, d, id) => { el.innerHTML = VIEWS[id].stats(d).join(''); },
+  score:    (el, d) => { el.innerHTML = scoreHtml(d); },
+  benefits: (el, d) => { el.innerHTML = benefitsHtml(d); },
+  table:    (el, d) => { el.innerHTML = tableHtml(d); },
+  insights: (el, d, id) => {
+    const items = VIEWS[id].insights(d);
+    el.querySelector('small').textContent = `${items.length} Punkte`;
+    el.querySelector('ul').innerHTML = items.map(li).join('');
+  },
+};
+
+const chartCard = id => {
+  const c = CHARTS[id];
+  return `<figure class="card chart"><figcaption><h3>${c.title}</h3><span class="unit">${c.unit}</span>${c.act != null ? `<span class="act">${c.act}</span>` : ''}</figcaption>`
+    + `<ul class="legend"></ul><div class="plot" data-chart="${id}" role="img" tabindex="0"></div></figure>`;
+};
+
+const SHELLS = {
+  stats: '<div class="stats" data-block="stats"></div>',
+  score: '<div class="card score" data-block="score"></div>',
+  benefits: '<div class="card" data-block="benefits"></div>',
+  table: '<div class="card" data-block="table"></div>',
+  insights: () => `<details class="card insights" data-block="insights"${matchMedia('(min-width:768px)').matches ? ' open' : ''}>`
+    + `<summary>Analyse <small></small>${icon('chevron')}</summary><ul></ul></details>`,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDERING — lazy per view; price changes only redraw price-dependent charts
+// ═══════════════════════════════════════════════════════════════════════════
+const ro = new ResizeObserver(entries => {
+  for (const {target} of entries) if (target.clientWidth && (target._dirty || target.clientWidth !== target._w)) drawChart(target);
+});
+const views = Object.fromEntries(Object.keys(VIEWS).map(id => [id, {el: $('#p-' + id), built:false, pending:null}]));
+
+function fill(id, scope) {
+  const el = views[id].el;
+  for (const b of el.querySelectorAll('[data-block]')) BLOCKS[b.dataset.block](b, data, id);
+  for (const p of el.querySelectorAll('.plot')) {
+    if (scope !== 'all' && !CHARTS[p.dataset.chart].price) continue;
+    p._dirty = true;
+    drawChart(p);
+  }
+}
+
+function ensure(id) {
+  const v = views[id];
+  if (!v.built) {
+    v.el.innerHTML = `<h2 class="sr-only">${VIEWS[id].label}</h2>` + VIEWS[id].layout.map(b =>
+      Array.isArray(b) ? `<div class="row">${b.map(chartCard).join('')}</div>` : typeof SHELLS[b] === 'function' ? SHELLS[b]() : SHELLS[b]).join('');
+    v.el.querySelectorAll('.plot').forEach(p => ro.observe(p));
+    v.built = true;
+    v.pending = 'all';
+  }
+  if (v.pending) { fill(id, v.pending); v.pending = null; }
+}
+
+function render(scope) {
+  data = derive(state);
+  const d = data, src = state.source || 'Beispieldaten';
+  $('#meta').textContent = `${span(d.Y)} · ${src}`;
+  $('#src').textContent = src;
+  $('#btn-reset').hidden = !state.source;
+  $('#kpis').innerHTML = [
+    stat('solar', 'Erzeugung', energy(d.tot.solar)),
+    stat('self', `Autarkie ${d.lf.year}`, [num(d.lf.autarky), '%']),
+    stat('money', 'Ersparnis', [num(d.tot.sav, 0), '€']),
+    stat('money', 'Amortisiert', [num(d.roi.progress * 100, 0), '%']),
+    stat('co2', 'CO₂ vermieden', [num(d.tot.co2, 0), 'kg']),
+  ].join('');
+  for (const [id, v] of Object.entries(views)) {
+    if (!v.built) continue;
+    if (id === current) fill(id, scope);
+    else v.pending = v.pending === 'all' ? 'all' : scope;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════════════════
+const tabs = [...document.querySelectorAll('[role=tab]')];
+const tablist = $('#tablist'), dock = $('#dock'), main = $('#main');
+
+function select(id, initial = false) {
+  if (!VIEWS[id]) id = 'erzeugung';
+  current = id;
+  for (const t of tabs) {
+    const on = t.dataset.view === id;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+  }
+  for (const [vid, v] of Object.entries(views)) v.el.hidden = vid !== id;
+  ensure(id);
+  if (initial) return;
+  history.replaceState(null, '', '#' + id);
+  const t = tabs.find(x => x.dataset.view === id);
+  const l = t.offsetLeft, r = l + t.offsetWidth;
+  if (l < tablist.scrollLeft) tablist.scrollLeft = l - 24;
+  else if (r > tablist.scrollLeft + tablist.clientWidth) tablist.scrollLeft = r - tablist.clientWidth + 24;
+  const top = main.offsetTop - dock.offsetHeight;
+  if (scrollY > top) scrollTo(0, top); // stuck dock: start the new view at its top
+}
+
+tablist.addEventListener('click', e => { const t = e.target.closest('[role=tab]'); if (t) select(t.dataset.view); });
+tablist.addEventListener('keydown', e => {
+  const i = tabs.indexOf(document.activeElement);
+  const j = {ArrowRight:i + 1, ArrowLeft:i - 1, Home:0, End:tabs.length - 1}[e.key];
+  if (i < 0 || j == null) return;
+  e.preventDefault();
+  const t = tabs[(j + tabs.length) % tabs.length];
+  t.focus();
+  select(t.dataset.view);
+});
+addEventListener('hashchange', () => select(location.hash.slice(1)));
+
+// ── Chart tooltips: one delegated listener for every plot ──────────────────
+let hovered = null;
+function onPointer(e) {
+  const plot = e.target.closest?.('.plot');
+  if (plot !== hovered) { hideTip(hovered); hovered = plot; }
+  if (plot?._g) showTip(plot, Math.floor((e.clientX - plot.getBoundingClientRect().left - plot._g.x0) / plot._g.band));
+}
+document.addEventListener('pointermove', onPointer, {passive:true});
+document.addEventListener('pointerdown', onPointer, {passive:true});
+main.addEventListener('focusin', e => { if (e.target._g) showTip(e.target, e.target._s.labels.length - 1); });
+main.addEventListener('focusout', e => { if (e.target._g) hideTip(e.target); });
+main.addEventListener('keydown', e => {
+  const p = e.target;
+  if (!p._g) return;
+  const n = p._s.labels.length, i = p._i ?? n - 1;
+  const j = {ArrowRight:i + 1, ArrowLeft:i - 1, Home:0, End:n - 1}[e.key];
+  if (j == null) return;
+  e.preventDefault();
+  showTip(p, j);
+});
+main.addEventListener('change', e => {
+  if (!e.target.matches('[data-month]')) return;
+  const plot = e.target.closest('figure').querySelector('.plot');
+  plot._year = +e.target.value;
+  drawChart(plot);
+});
+
+// ── Settings ───────────────────────────────────────────────────────────────
+const settings = $('#settings'), btnSettings = $('#btn-settings');
+const inputs = {buy:$('#in-buy'), sell:$('#in-sell'), cost:$('#in-cost')};
+const inRange = (k, v) => Number.isFinite(v) && v >= LIMITS[k][0] && v <= LIMITS[k][1];
+
+function toggleSettings(open, focus) {
+  settings.hidden = !open;
+  btnSettings.setAttribute('aria-expanded', open);
+  if (open) (focus || inputs.buy).focus({preventScroll:true});
+  else btnSettings.focus({preventScroll:true});
+}
+btnSettings.addEventListener('click', () => toggleSettings(settings.hidden));
+settings.addEventListener('keydown', e => { if (e.key === 'Escape') toggleSettings(false); });
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) toggleSettings(false);
+  const open = e.target.closest('[data-open]');
+  if (open) toggleSettings(true, $('#' + open.dataset.open));
+});
+
+const save = () => {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({buy:state.buy, sell:state.sell, cost:state.cost, rows:state.source ? state.rows : null, source:state.source})); }
+  catch { /* storage unavailable — settings stay session-only */ }
+};
+let priceTimer;
+for (const [k, el] of Object.entries(inputs)) {
+  el.addEventListener('input', () => {
+    const v = el.valueAsNumber, ok = inRange(k, v);
+    el.setAttribute('aria-invalid', !ok);
+    if (!ok || v === state[k]) return;
+    state[k] = v;
+    clearTimeout(priceTimer);
+    priceTimer = setTimeout(() => { render('price'); save(); }, 200);
+  });
+  el.addEventListener('change', () => { // normalise out-of-range or empty input on blur
+    if (inRange(k, el.valueAsNumber)) return;
+    el.value = Number.isFinite(el.valueAsNumber) ? clamp(el.valueAsNumber, ...LIMITS[k]) : state[k];
+    el.setAttribute('aria-invalid', false);
+    el.dispatchEvent(new Event('input'));
+  });
+}
+
+// ── Data: CSV upload, drag & drop, reset ───────────────────────────────────
+const toastEl = $('#toast');
+let toastTimer;
+function toast(msg, err = false) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
+}
+
+async function loadFile(file) {
+  if (!file) return;
+  if (!/\.csv$/i.test(file.name) && file.type !== 'text/csv') return toast('Bitte eine CSV-Datei wählen.', true);
+  if (file.size > 2e6) return toast('Die Datei ist zu groß (max. 2 MB).', true);
+  try {
+    const rows = parseCSV(await file.text());
+    Object.assign(state, {rows, source:file.name});
+    render('all');
+    save();
+    toast(`${file.name}: ${data.Y.length} Jahre geladen (${span(data.Y)})`);
+  } catch (err) { toast(err.message, true); }
+}
+
+document.addEventListener('change', e => {
+  if (!e.target.matches('[data-csv]')) return;
   loadFile(e.target.files[0]);
   e.target.value = '';
 });
+$('#btn-reset').addEventListener('click', () => {
+  Object.assign(state, {rows:SAMPLE, source:null});
+  render('all');
+  save();
+  toast('Beispieldaten geladen');
+});
 
-// Drag-and-drop onto the whole page
-document.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
-document.addEventListener('dragleave', e => { if (e.relatedTarget===null) document.body.classList.remove('drag-over'); });
-document.addEventListener('drop', e => {
+let dragDepth = 0;
+const hasFiles = e => e.dataTransfer?.types.includes('Files');
+addEventListener('dragenter', e => { if (hasFiles(e) && ++dragDepth === 1) document.body.classList.add('dragging'); });
+addEventListener('dragleave', e => { if (hasFiles(e) && --dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+addEventListener('drop', e => {
+  if (!hasFiles(e)) return;
   e.preventDefault();
-  document.body.classList.remove('drag-over');
+  dragDepth = 0;
+  document.body.classList.remove('dragging');
   loadFile(e.dataTransfer.files[0]);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// INITIAL LOAD + TAB SWITCHING
+// INIT
 // ═══════════════════════════════════════════════════════════════════════════
-currentRows = DEFAULT_ROWS;
-refreshAll(DEFAULT_ROWS);
+const validRow = r => r && Number.isInteger(r.year) && ['home','powerwall','solar','fromGrid','toGrid'].every(k => Number.isFinite(r[k]));
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+  for (const k of Object.keys(LIMITS)) if (inRange(k, saved[k])) state[k] = saved[k];
+  if (Array.isArray(saved.rows) && saved.rows.length && saved.rows.every(validRow)) Object.assign(state, {rows:saved.rows, source:String(saved.source || 'Eigene Daten')});
+} catch { /* ignore corrupt or blocked storage */ }
+for (const [k, el] of Object.entries(inputs)) el.value = state[k];
 
-
-// ═══════════════════════════════════════════════════════════════════════════
-// JAHRESVERGLEICH  — DOM-only (charts built lazily in _buildVergleichCharts)
-// ═══════════════════════════════════════════════════════════════════════════
-function buildComparisonTab(d) {
-  const metrics = [
-    {lbl:'Solar (MWh)',       arr:d.solar,   fmt:v=>de(v)+'MWh'},
-    {lbl:'Autarkie (%)',      arr:d.autarky, fmt:v=>de(v)+'%'},
-    {lbl:'EVQ (%)',           arr:d.evq,     fmt:v=>de(v)+'%'},
-    {lbl:'Einspeisung (MWh)',arr:d.tgrid,   fmt:v=>de(v)+'MWh'},
-    {lbl:'Powerwall (MWh)',  arr:d.pw,      fmt:v=>de(v)+'MWh'},
-    {lbl:'Ersparnis (€)',    arr:d.savings, fmt:v=>de(v,0)+'€'},
-    {lbl:'CO₂ (kg)',         arr:d.co2,     fmt:v=>de(v,0)+'kg'},
-  ];
-  const stats = metrics.map(m => {
-    const mx = Math.max(...m.arr);
-    const bestIdx = m.arr.indexOf(mx);
-    return { mx, bestIdx };
-  });
-
-  document.getElementById('cmp-head').innerHTML =
-    `<tr><th>Kennzahl</th>${d.yrs.map((yr,i)=>`<th style="color:${PCOLS[i%PCOLS.length]}">${yr}</th>`).join('')}</tr>`;
-
-  document.getElementById('cmp-body').innerHTML = metrics.map((m, mi) => {
-    const { mx, bestIdx } = stats[mi];
-    const cells = m.arr.map((v,i) => {
-      const prev = m.arr[i-1];
-      let delta = '';
-      if (i > 0 && prev > 0) {
-        const pct = ((v/prev-1)*100).toFixed(1);
-        delta = `<br><span class="${+pct>0?'delta-up':+pct<0?'delta-dn':'delta-eq'}">${+pct>=0?'+':''}${pct}%</span>`;
-      }
-      return `<td class="${v===mx?'cmp-best':''}"
-        style="${v===mx?'color:'+PCOLS[bestIdx%PCOLS.length]:''}">${m.fmt(v)}${delta}</td>`;
-    }).join('');
-    return `<tr><td>${m.lbl}</td>${cells}</tr>`;
-  }).join('');
-
-  const bestAutYr = d.yrs[d.autarky.indexOf(Math.max(...d.autarky))];
-  const bestEvqYr = d.yrs[d.evq.indexOf(Math.max(...d.evq))];
-  const growthPct = d.solar[0]>0 ? Math.round((d.solar[d.solar.length-1]/d.solar[0]-1)*100) : 0;
-  document.getElementById('cmp-analysis').innerHTML = [
-    `<strong>${bestAutYr}</strong> ist das Rekordjahr mit <strong>${de(Math.max(...d.autarky))} % Autarkie</strong>.`,
-    `Solarertrag: <strong>${de(d.solar[0])} MWh</strong> (${d.yrs[0]}) → <strong>${de(d.solar[d.solar.length-1])} MWh</strong> (${d.yrs[d.yrs.length-1]}) — gesamt <strong>${growthPct>=0?'+':''}${growthPct} %</strong>.`,
-    `Beste Eigenverbrauchsquote: <strong>${de(Math.max(...d.evq))} %</strong> in <strong>${bestEvqYr}</strong> — geringstes Einspeise-Potenzial.`,
-    `Kumulierte Gesamtersparnis über ${d.yrs.length} Jahre: <strong>${de(d.totalSav,0)} €</strong>.`,
-  ].map(t=>`<li>${t}</li>`).join('');
-}
-
-// ─── Tab Switching ────────────────────────────────────────────────────────
-function showTab(id, btn) {
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.remove('active');
-    b.setAttribute('aria-selected', 'false');
-  });
-  document.getElementById('pane-' + id).classList.add('active');
-  btn.classList.add('active');
-  btn.setAttribute('aria-selected', 'true');
-  if (_derived) {
-    if (!_builtDomContent.has(id)) {
-      _buildLazyTabContent(id, _derived);
-      _builtDomContent.add(id);
-    }
-    requestAnimationFrame(() => buildChartsForTab(id, _derived));
-  }
-}
+render('all');
+select(location.hash.slice(1), true);
 </script>
 </body>
 </html>
